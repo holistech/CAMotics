@@ -1,0 +1,4 @@
+{
+  "command": "%(suite-dir)s/run-gui %(data-dir)s/project.camotics",
+  "timeout": 60
+}

@@ -26,7 +26,9 @@ sein (`scons` im Projektwurzelverzeichnis).
 | `varRefTests` | `gcodetool` | G-code-Variablenreferenzen |
 | `tplTests` | `tplang` | TPL/JavaScript-Tool-Path-Language |
 | `plannerTests` | `planner` | Motion-Planning (JSON-Plan-Ausgabe) |
-| `simTests` | `camsim` | End-to-End-Simulation (STL-Kennzahlen) |
+| `simTests` | `camsim` | End-to-End-Simulation (STL-Kennzahlen; alle Werkzeugformen) |
+| `pythonTests` | `camotics.so` | Python-Binding-Refcount-Regression |
+| `guiTests` | `camotics` | GUI-Pipeline-Smoke-Test (headless via Xvfb) |
 
 ## Simulationstests (`simTests`)
 
@@ -60,4 +62,25 @@ Thread-Partitionierung ab), vergleichen die Sim-Tests **abgeleitete Kennzahlen**
 
 `planner --json-out` liest G-code von stdin und gibt den geplanten Bewegungsablauf als
 JSON aus (deterministisch, inkl. simulierter Bearbeitungszeit auf stderr). Neue Tests
-analog zu den `gcodetool`-Suiten: `data/stdin` + `expect/{stdout,stderr,return}`.
+analog zu den `gcodetool`-Suiten: `data/stdin` + `expect/{stdout,stderr,return}`. Einige
+Tests überschreiben das `command` per Test-`test.json` auf `--gcode` (trifft die
+`GCodeMachine`-Ausgabesenke statt `JSONMachine`).
+
+## GUI-Tests (`guiTests`)
+
+`run-gui <projekt.camotics>` startet `camotics` headless unter **Xvfb** (kein Fenster auf
+dem echten Display), lässt es das Projekt laden, die Oberfläche berechnen und per OpenGL
+rendern, und beendet es dann per SIGTERM. Erfolg = die App lief ohne Crash (Smoke-Test der
+gesamten GUI- + Simulations- + Render-Pipeline). Benötigt `xvfb-run`.
+
+Hinweis: Dieser Test verifiziert die Pipeline (Crash-Schutz), liefert aber **keine**
+gcov-Zeilen-Coverage für die GUI — `camotics` wird per Signal terminiert, bevor die
+gcov-atexit-Handler schreiben (Qt- und cbang-Event-Loop sind getrennt, `requestExit`
+beendet die Qt-Loop nicht). Eine echte GUI-Coverage-Messung bräuchte einen sauberen
+Exit-Pfad (z. B. SIGTERM → `qApp->quit()`), was hier bewusst nicht erzwungen wird.
+
+## Code coverage
+
+Siehe `CLAUDE.md` → „Code coverage". Kurzform: `scons coverage=1`, Tests laufen lassen,
+`gcov --json-format --stdout build/<pfad>.gcda` auswerten, danach normal neu bauen und
+`build/**/*.gcda`,`*.gcno` löschen.

@@ -1,0 +1,11 @@
+[
+  {"type": "units", "value": "METRIC"},
+  {"type": "tool", "value": 1},
+  {"type": "move", "rapid": true, "to": {"x": 5, "y": 5}},
+  {"type": "feed", "value": 100},
+  {"type": "move", "to": {"z": -2}},
+  {"type": "arc", "offset": [2.5, 0, 0], "to": [10, 5, -2], "angle": 3.142, "plane": "XY"},
+  {"type": "dwell", "seconds": 0.5},
+  {"type": "output", "port": "MIST", "value": 0},
+  {"type": "output", "port": "FLOOD", "value": 0}
+]

@@ -1,0 +1,10 @@
+[
+  {"type": "units", "value": "METRIC"},
+  {"type": "tool", "value": 2},
+  {"type": "move", "rapid": true, "to": {"x": 25.4, "y": 25.4}},
+  {"type": "feed", "value": 254},
+  {"type": "move", "to": {"z": -12.7}},
+  {"type": "move", "to": {"x": 50.8}},
+  {"type": "output", "port": "MIST", "value": 0},
+  {"type": "output", "port": "FLOOD", "value": 0}
+]

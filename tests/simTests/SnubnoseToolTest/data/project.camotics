@@ -1,0 +1,6 @@
+{
+  "units": "metric", "resolution-mode": "manual", "resolution": 1.0,
+  "tools": {"1": {"units": "metric", "shape": "snubnose", "length": 10, "diameter": 4, "snub_diameter": 1, "description": ""}},
+  "workpiece": {"automatic": false, "margin": 5, "bounds": {"min": [0,0,-5], "max": [20,20,0]}},
+  "files": ["cut.gcode"]
+}
