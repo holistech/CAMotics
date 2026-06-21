@@ -1,51 +1,51 @@
 # P5 — GUI: Fixes
 
-**Ziel:** Speicher-/Ownership- und Robustheitsdefekte in der Qt-/OpenGL-GUI beheben.
-GUI-Code ist nur eingeschränkt automatisiert testbar — Fokus auf Korrektheit durch
-Review + manuelle Verifikation; der testbare `value/`-Teil bekommt einen Test.
+**Goal:** Fix memory/ownership and robustness defects in the Qt/OpenGL GUI.
+GUI code is only partly automatable for testing — focus on correctness through
+review + manual verification; the testable `value/` part gets a test.
 
-**Status:** ⬜ offen · **Befunde:** U-1…U-14 (Details siehe `CODE_REVIEW.md` §3.3)
+**Status:** ⬜ open · **Findings:** U-1…U-14 (details see `CODE_REVIEW.md` §3.3)
 
 ---
 
-## Fixes (priorisiert)
+## Fixes (prioritized)
 
-| ID | Schweregrad | Datei:Zeile | Fix-Kern |
+| ID | Severity | File:Line | Fix Core |
 |----|-------------|-------------|----------|
-| U-1 | HOCH | `qt/QtWin.cpp:1411,1242,1930` | Persistentes Member-`QStringListModel` mit Parent; nur `setStringList()`; nicht im `resizeEvent` neu bauen. |
-| U-2 | HOCH | `qt/BBCtrlAPI.cpp:43-45`, `.h:42-43` | `lastMessage(0)`, `useSystemProxy(false)` initialisieren. |
-| U-3 | HOCH | `qt/BBCtrlAPI.cpp:104,123` | Kopierendes `QByteArray(data, length)` statt `fromRawData`. |
-| U-4 | HOCH | `value/VarValue.h:30`, `MemberFunctorObserver.h:30`, `qt/QtWin.h:111-114` | Deregistrierung im Value/Observer-System; mind. Zerstörungsreihenfolge `valueSet` zuletzt + Kommentar. |
-| U-5 | MITTEL | `view/View.cpp:297-319`, `view/GLScene.cpp:45` | `glInit()` idempotent (Szene vorher leeren / nur Erst-Init). |
-| U-6 | MITTEL | `view/GLProgram.cpp:41-45`, `view/VBO.cpp:27-32` | GL-Freigabe an `makeCurrent()`/Widget-Lebenszyklus koppeln. |
-| U-7 | MITTEL | `qt/BBCtrlAPI.cpp:109,157-191,203` | Adresse via `QUrl` validieren; `line ? line-1 : 0`; JSON-Felder prüfen. |
-| U-8 | MITTEL | `qt/BBCtrlAPI.cpp:87-91,146-154` | Reconnect-Zähler + Abbruch/Statusmeldung; Originaladresse beibehalten. |
-| U-9 | MITTEL | `qt/QtWin.cpp` | `update*`/`on_action*Surface`/Spinbox-Handler datengetrieben entflechten. |
-| U-10 | MITTEL | `qt/QtWin.cpp:300,1409,1785…` | `QString::sprintf` → `arg`/`number`/`asprintf`. |
-| U-11 | NIEDRIG | `qt/QtWin.cpp:177,185,496,1661-1672` | `QMenu`/`QMovie` mit Parent; manuelle `delete` vermeiden. |
-| U-12 | NIEDRIG | `view/GLProgram.cpp:119-128` | Fehlende Uniforms tolerieren (cachen, no-op, einmalige Warnung). |
-| U-13 | NIEDRIG | `qt/GLView.cpp:31,98` | `QSurfaceFormat` / `QWheelEvent::angleDelta()`. |
-| U-14 | NIEDRIG | `qt/QtWin.cpp:895-907` | Verworfenen Sofort-Redraw via `singleShot` nachziehen. |
+| U-1 | HIGH | `qt/QtWin.cpp:1411,1242,1930` | Persistent member `QStringListModel` with a parent; only `setStringList()`; do not rebuild it in `resizeEvent`. |
+| U-2 | HIGH | `qt/BBCtrlAPI.cpp:43-45`, `.h:42-43` | Initialize `lastMessage(0)`, `useSystemProxy(false)`. |
+| U-3 | HIGH | `qt/BBCtrlAPI.cpp:104,123` | Copying `QByteArray(data, length)` instead of `fromRawData`. |
+| U-4 | HIGH | `value/VarValue.h:30`, `MemberFunctorObserver.h:30`, `qt/QtWin.h:111-114` | Deregistration in the Value/Observer system; at minimum destruction order with `valueSet` last + comment. |
+| U-5 | MEDIUM | `view/View.cpp:297-319`, `view/GLScene.cpp:45` | Make `glInit()` idempotent (clear the scene beforehand / first-init only). |
+| U-6 | MEDIUM | `view/GLProgram.cpp:41-45`, `view/VBO.cpp:27-32` | Couple GL release to `makeCurrent()`/the widget lifecycle. |
+| U-7 | MEDIUM | `qt/BBCtrlAPI.cpp:109,157-191,203` | Validate the address via `QUrl`; `line ? line-1 : 0`; check JSON fields. |
+| U-8 | MEDIUM | `qt/BBCtrlAPI.cpp:87-91,146-154` | Reconnect counter + abort/status message; keep the original address. |
+| U-9 | MEDIUM | `qt/QtWin.cpp` | Disentangle `update*`/`on_action*Surface`/spinbox handlers in a data-driven way. |
+| U-10 | MEDIUM | `qt/QtWin.cpp:300,1409,1785…` | `QString::sprintf` → `arg`/`number`/`asprintf`. |
+| U-11 | LOW | `qt/QtWin.cpp:177,185,496,1661-1672` | `QMenu`/`QMovie` with a parent; avoid manual `delete`. |
+| U-12 | LOW | `view/GLProgram.cpp:119-128` | Tolerate missing uniforms (cache, no-op, one-time warning). |
+| U-13 | LOW | `qt/GLView.cpp:31,98` | `QSurfaceFormat` / `QWheelEvent::angleDelta()`. |
+| U-14 | LOW | `qt/QtWin.cpp:895-907` | Reissue the discarded immediate redraw via `singleShot`. |
 
-## Tests / Verifikation
+## Tests / Verification
 
-- **`value/`-Observer (testbar):** Kleiner Unit-artiger Test über das Python-Modul oder
-  einen Mini-Treiber, der `ValueSet`/`VarValue`-Lebenszeit und Deregistrierung (U-4) prüft.
-- **Manuelle Verifikation** (dokumentiert im Status): `camotics` starten, Projekt laden,
-  Fenster mehrfach resizen (U-1 Leak via Speicherbeobachtung), Dock un-/andocken (U-5/U-6),
-  BBCtrl-Verbindung gegen nicht erreichbaren Host (U-2/U-7/U-8).
-- **Build-Verifikation:** GUI baut weiterhin (`scons` mit `with_gui=1`).
+- **`value/` observer (testable):** Small unit-style test via the Python module or
+  a mini driver that checks `ValueSet`/`VarValue` lifetime and deregistration (U-4).
+- **Manual verification** (documented in the status): Start `camotics`, load a project,
+  resize the window multiple times (U-1 leak via memory observation), un-/redock the dock (U-5/U-6),
+  BBCtrl connection against an unreachable host (U-2/U-7/U-8).
+- **Build verification:** The GUI still builds (`scons` with `with_gui=1`).
 
-## Abnahmekriterien
+## Acceptance Criteria
 
-- [ ] Alle HOCH-Befunde (U-1…U-4) behoben.
-- [ ] Build mit GUI grün; keine neuen Warnungen.
-- [ ] `value/`-Test grün (falls Treiber realisierbar) oder Begründung im Status.
-- [ ] Manuelle Verifikationsschritte durchgeführt und im Status protokolliert.
+- [ ] All HIGH findings (U-1…U-4) fixed.
+- [ ] Build with GUI green; no new warnings.
+- [ ] `value/` test green (if a driver is feasible) or justification in the status.
+- [ ] Manual verification steps performed and recorded in the status.
 
-## Risiken
+## Risks
 
-- U-4 (Observer-Lebenszeit) ist strukturell — minimal-invasive Lösung (Zerstörungs-
-  reihenfolge + Doku) bevorzugen, größere Umbauten nur falls nötig.
-- U-10 (`sprintf`-Migration) ist breit gestreut → mechanisch, aber sorgfältig auf
-  Format-Semantik achten.
+- U-4 (observer lifetime) is structural — prefer a minimally invasive solution (destruction
+  order + docs), larger rework only if necessary.
+- U-10 (`sprintf` migration) is widely scattered → mechanical, but pay careful attention to
+  format semantics.

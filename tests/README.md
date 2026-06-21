@@ -1,86 +1,86 @@
 # CAMotics Tests
 
-Die Tests nutzen den cbang-`testHarness` (Python). Jeder Test führt ein `command` aus
-und vergleicht `stdout`/`stderr`/`return` gegen Golden-Files unter `<test>/expect/`.
-Eingaben kommen aus `<test>/data/` (per `stdin` oder als Argument).
+The tests use the cbang `testHarness` (Python). Each test runs a `command`
+and compares `stdout`/`stderr`/`return` against golden files under `<test>/expect/`.
+Inputs come from `<test>/data/` (via `stdin` or as an argument).
 
-## Ausführen
+## Running
 
 ```bash
 cd tests
-./testHarness                       # alle Suiten
-./testHarness run simTests          # eine Suite
-./testHarness run simTests/BoxMillTest   # ein Test
-./testHarness diff simTests/BoxMillTest  # Diff actual vs. expected
+./testHarness                       # all suites
+./testHarness run simTests          # a single suite
+./testHarness run simTests/BoxMillTest   # a single test
+./testHarness diff simTests/BoxMillTest  # diff actual vs. expected
 ```
 
-Voraussetzung: Die Binaries (`gcodetool`, `planner`, `camsim`, `tplang`) müssen gebaut
-sein (`scons` im Projektwurzelverzeichnis).
+Prerequisite: The binaries (`gcodetool`, `planner`, `camsim`, `tplang`) must be built
+(`scons` in the project root directory).
 
-## Suiten
+## Suites
 
-| Suite | Treiber | Inhalt |
+| Suite | Driver | Content |
 |-------|---------|--------|
-| `oCodeTests` | `gcodetool` | O-code-Kontrollfluss |
-| `offsetTests` | `gcodetool` | Koordinatensysteme & Werkzeug-Offsets |
-| `varRefTests` | `gcodetool` | G-code-Variablenreferenzen |
-| `tplTests` | `tplang` | TPL/JavaScript-Tool-Path-Language |
-| `plannerTests` | `planner` | Motion-Planning (JSON-Plan-Ausgabe) |
-| `simTests` | `camsim` | End-to-End-Simulation (STL-Kennzahlen; alle Werkzeugformen) |
-| `pythonTests` | `camotics.so` | Python-Binding-Refcount-Regression |
-| `guiTests` | `camotics` | GUI-Pipeline-Smoke-Test (headless via Xvfb) |
+| `oCodeTests` | `gcodetool` | O-code control flow |
+| `offsetTests` | `gcodetool` | Coordinate systems & tool offsets |
+| `varRefTests` | `gcodetool` | G-code variable references |
+| `tplTests` | `tplang` | TPL/JavaScript tool path language |
+| `plannerTests` | `planner` | Motion planning (JSON plan output) |
+| `simTests` | `camsim` | End-to-end simulation (STL metrics; all tool shapes) |
+| `pythonTests` | `camotics.so` | Python binding refcount regression |
+| `guiTests` | `camotics` | GUI pipeline smoke test (headless via Xvfb) |
 
-## Simulationstests (`simTests`)
+## Simulation tests (`simTests`)
 
-Da die rohe STL-Ausgabe nicht byte-stabil ist (Facetten-Reihenfolge hängt von der
-Thread-Partitionierung ab), vergleichen die Sim-Tests **abgeleitete Kennzahlen**
-(Facettenzahl, Bounding-Box, Volumen, Oberfläche) statt der Datei selbst.
+Since the raw STL output is not byte-stable (facet ordering depends on the
+thread partitioning), the sim tests compare **derived metrics**
+(facet count, bounding box, volume, surface area) instead of the file itself.
 
-- `run-sim <projekt.camotics>` — ruft `camsim --threads=1 --binary=false` auf und gibt
-  die Kennzahlen aus `stl-metrics.py` nach stdout. **`--threads=1` ist Pflicht**: bei
-  mehreren Threads entstehen an den Partitionsgrenzen leicht andere Facetten.
-- `stl-metrics.py <datei.stl>` — extrahiert die deterministischen Kennzahlen (rundet
-  gegen FP-Rauschen).
+- `run-sim <project.camotics>` — invokes `camsim --threads=1 --binary=false` and prints
+  the metrics from `stl-metrics.py` to stdout. **`--threads=1` is mandatory**: with
+  multiple threads, slightly different facets arise at the partition boundaries.
+- `stl-metrics.py <file.stl>` — extracts the deterministic metrics (rounds
+  against FP noise).
 
-### Neuen Simulationstest hinzufügen
+### Adding a new simulation test
 
-1. Verzeichnis `simTests/<Name>/data/` anlegen mit:
-   - `project.camotics` — Projekt mit **festen** Bounds (`"automatic": false`), definiertem
-     Werkzeug und fester `resolution`. Feste Bounds sind nötig, solange der
-     Automatik-Workpiece-Pfad in `camsim` defekt ist (siehe `CODE_REVIEW.md`, S-13).
-   - die referenzierte G-code-/TPL-Datei (relativer Pfad in `files`).
-2. Golden erzeugen:
+1. Create the directory `simTests/<Name>/data/` with:
+   - `project.camotics` — project with **fixed** bounds (`"automatic": false`), a defined
+     tool and a fixed `resolution`. Fixed bounds are necessary as long as the
+     automatic workpiece path in `camsim` is broken (see `CODE_REVIEW.md`, S-13).
+   - the referenced G-code/TPL file (relative path in `files`).
+2. Generate the golden:
    ```bash
    mkdir -p simTests/<Name>/expect
    ./simTests/run-sim simTests/<Name>/data/project.camotics > simTests/<Name>/expect/stdout
    : > simTests/<Name>/expect/stderr
    echo -n 0 > simTests/<Name>/expect/return
    ```
-3. Vor dem Commit den Test 3× laufen lassen und auf stabile Kennzahlen prüfen.
+3. Before committing, run the test 3 times and check for stable metrics.
 
-## Planner-Tests (`plannerTests`)
+## Planner tests (`plannerTests`)
 
-`planner --json-out` liest G-code von stdin und gibt den geplanten Bewegungsablauf als
-JSON aus (deterministisch, inkl. simulierter Bearbeitungszeit auf stderr). Neue Tests
-analog zu den `gcodetool`-Suiten: `data/stdin` + `expect/{stdout,stderr,return}`. Einige
-Tests überschreiben das `command` per Test-`test.json` auf `--gcode` (trifft die
-`GCodeMachine`-Ausgabesenke statt `JSONMachine`).
+`planner --json-out` reads G-code from stdin and outputs the planned motion sequence as
+JSON (deterministic, including simulated machining time on stderr). New tests are written
+analogously to the `gcodetool` suites: `data/stdin` + `expect/{stdout,stderr,return}`. Some
+tests override the `command` via the test's `test.json` to `--gcode` (which hits the
+`GCodeMachine` output sink instead of `JSONMachine`).
 
-## GUI-Tests (`guiTests`)
+## GUI tests (`guiTests`)
 
-`run-gui <projekt.camotics>` startet `camotics` headless unter **Xvfb** (kein Fenster auf
-dem echten Display), lässt es das Projekt laden, die Oberfläche berechnen und per OpenGL
-rendern, und beendet es dann per SIGTERM. Erfolg = **sauberer** Exit (Code 0): camotics
-fängt SIGTERM ab (`FEATURE_SIGNAL_HANDLER`), der Poll-Timer in `QtApp::run` beendet die
-Qt-Event-Loop, und die App fährt regulär herunter (State speichern, GL-Ressourcen
-freigeben). Der Test verriegelt damit zugleich den sauberen Shutdown. Benötigt `xvfb-run`.
+`run-gui <project.camotics>` starts `camotics` headless under **Xvfb** (no window on
+the real display), has it load the project, compute the surface and render it via OpenGL,
+and then terminates it via SIGTERM. Success = a **clean** exit (code 0): camotics
+catches SIGTERM (`FEATURE_SIGNAL_HANDLER`), the poll timer in `QtApp::run` ends the
+Qt event loop, and the app shuts down normally (save state, release GL resources).
+The test thereby also locks in the clean shutdown. Requires `xvfb-run`.
 
-Weil camotics nun sauber herunterfährt, laufen die gcov-atexit-Handler — der GUI-Test
-liefert daher **echte Zeilen-Coverage** für die GUI-Module (gemessen u. a. `view` ~59 %,
-`value` ~72 %, `qt` ~28 %). Vgl. Coverage-Anleitung in `CLAUDE.md`.
+Because camotics now shuts down cleanly, the gcov atexit handlers run — the GUI test
+therefore provides **real line coverage** for the GUI modules (measured, among others, `view` ~59 %,
+`value` ~72 %, `qt` ~28 %). Cf. the coverage guide in `CLAUDE.md`.
 
 ## Code coverage
 
-Siehe `CLAUDE.md` → „Code coverage". Kurzform: `scons coverage=1`, Tests laufen lassen,
-`gcov --json-format --stdout build/<pfad>.gcda` auswerten, danach normal neu bauen und
-`build/**/*.gcda`,`*.gcno` löschen.
+See `CLAUDE.md` → "Code coverage". In short: `scons coverage=1`, run the tests,
+evaluate `gcov --json-format --stdout build/<path>.gcda`, then rebuild normally and
+delete `build/**/*.gcda`,`*.gcno`.

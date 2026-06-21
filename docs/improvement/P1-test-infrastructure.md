@@ -1,69 +1,69 @@
-# P1 — Test-Infrastruktur & Simulations-Harness
+# P1 — Test Infrastructure & Simulation Harness
 
-**Ziel:** Fundament schaffen, um die heute ungetesteten Binaries (`camsim`, `planner`)
-automatisiert und deterministisch zu testen. Voraussetzung für die Verifikation der
-Simulations-Fixes in P3.
+**Goal:** Establish a foundation for testing the currently untested binaries (`camsim`, `planner`)
+automatically and deterministically. Prerequisite for verifying the
+simulation fixes in P3.
 
-**Status:** ⬜ offen
+**Status:** ⬜ open
 
 ---
 
-## Hintergrund
+## Background
 
-- `tests/testHarness` (cbang, Python) führt pro Test ein `command` aus und vergleicht
-  `stdout`/`stderr`/`return` gegen Golden-Files in `expect/`. Eingabe via `data/stdin`.
-- `camsim <input.gcode|tpl|camotics> <output.stl>` erzeugt eine STL-Datei. Optionen:
-  `--binary 0` (ASCII-STL), `--threads N`, `--resolution low|medium|high|<dezimal>`,
+- `tests/testHarness` (cbang, Python) runs a `command` per test and compares
+  `stdout`/`stderr`/`return` against golden files in `expect/`. Input via `data/stdin`.
+- `camsim <input.gcode|tpl|camotics> <output.stl>` produces an STL file. Options:
+  `--binary 0` (ASCII STL), `--threads N`, `--resolution low|medium|high|<decimal>`,
   `--time`, `--reduce`, `--render-mode`.
-- Direktes STL-Byte-Diffing ist **nicht** robust: Thread-Partitionierung kann die
-  Facetten-Reihenfolge ändern; Floating-Point variiert minimal über Plattformen.
-  → Stattdessen **stabile Kennzahlen** vergleichen.
+- Direct STL byte diffing is **not** robust: thread partitioning can change the
+  facet ordering; floating point varies minimally across platforms.
+  → Instead, compare **stable metrics**.
 
-## Umsetzungsschritte
+## Implementation Steps
 
-1. **STL-Kennzahl-Extraktor** (`tests/simTests/stl-metrics.py`):
-   liest eine (ASCII- oder Binär-)STL und gibt deterministische Kennzahlen nach stdout:
-   - Facettenzahl
-   - Bounding-Box (auf z. B. 3 Nachkommastellen gerundet)
-   - Geschlossenes Volumen (Signed-Volume-Summe der Dreiecke, gerundet)
-   - Oberfläche (gerundet)
-   Rundung macht den Vergleich robust gegen FP-Rauschen.
+1. **STL metric extractor** (`tests/simTests/stl-metrics.py`):
+   reads an (ASCII or binary) STL and outputs deterministic metrics to stdout:
+   - Facet count
+   - Bounding box (rounded to e.g. 3 decimal places)
+   - Closed volume (signed-volume sum of the triangles, rounded)
+   - Surface area (rounded)
+   Rounding makes the comparison robust against FP noise.
 
-2. **Test-Wrapper** (`tests/simTests/run-sim.sh` o. ä.): ruft
-   `camsim --threads 1 --binary 0 --resolution <fix> <input> <tmp.stl>` auf, leitet
-   `tmp.stl` durch `stl-metrics.py`, schreibt Kennzahlen nach stdout.
-   `--threads 1` für Determinismus.
+2. **Test wrapper** (`tests/simTests/run-sim.sh` or similar): invokes
+   `camsim --threads 1 --binary 0 --resolution <fixed> <input> <tmp.stl>`, pipes
+   `tmp.stl` through `stl-metrics.py`, writes metrics to stdout.
+   `--threads 1` for determinism.
 
-3. **Suite `tests/simTests/test.json`**: `command` = Wrapper. Pro Test ein Verzeichnis
-   mit `data/` (G-code-Input) und `expect/{stdout,stderr,return}`.
+3. **Suite `tests/simTests/test.json`**: `command` = wrapper. Per test one directory
+   with `data/` (G-code input) and `expect/{stdout,stderr,return}`.
 
-4. **Initiale Simulations-Tests** (Golden via `testHarness init`):
-   - `BoxMillTest` — einfacher rechteckiger Fräspfad, prüft Grund-Materialabtrag.
-   - `DrillTest` — Bohrzyklus, prüft zylindrische Abtragung.
-   - `ArcMillTest` — Bogenbewegung (G2/G3), prüft gekrümmte Oberfläche.
-   - `SmallToolTest` — Werkzeug mit Radius < 1/16 Einheit → **Regressionstest für K-1**
-     (dieser Test muss VOR dem Fix fehlschlagen/leeres Mesh zeigen, NACH dem Fix korrekt).
+4. **Initial simulation tests** (golden via `testHarness init`):
+   - `BoxMillTest` — simple rectangular milling path, checks basic material removal.
+   - `DrillTest` — drilling cycle, checks cylindrical removal.
+   - `ArcMillTest` — arc movement (G2/G3), checks curved surface.
+   - `SmallToolTest` — tool with radius < 1/16 unit → **regression test for K-1**
+     (this test must fail / show an empty mesh BEFORE the fix, and be correct AFTER the fix).
 
-5. **`planner`-Harness** analog zu `gcodetool` (`tests/plannerTests/`): `planner` liest
-   G-code von stdin und gibt geplante Moves aus → direkt golden-vergleichbar wie die
-   bestehenden `gcodetool`-Suiten. Initiale Tests: einfache Linearbewegung, Vorschub-/
-   Eilgang-Übergang, Bogen.
+5. **`planner` harness** analogous to `gcodetool` (`tests/plannerTests/`): `planner` reads
+   G-code from stdin and outputs planned moves → directly golden-comparable like the
+   existing `gcodetool` suites. Initial tests: simple linear movement, feed/
+   rapid transition, arc.
 
-6. **Determinismus-Check:** Jeden neuen Test 3× laufen lassen, sicherstellen, dass die
-   Kennzahlen stabil sind, bevor die Golden-Files committet werden.
+6. **Determinism check:** Run each new test 3× and make sure that the
+   metrics are stable before the golden files are committed.
 
-## Abnahmekriterien
+## Acceptance Criteria
 
-- [ ] `stl-metrics.py` liefert reproduzierbare Kennzahlen.
-- [ ] `tests/simTests` mit ≥ 4 Tests, alle grün (außer `SmallToolTest`, der bis P3 als
-      bekannter Fehlschlag markiert oder via `disable` geparkt wird).
-- [ ] `tests/plannerTests` mit ≥ 3 Tests, alle grün.
-- [ ] `./testHarness` aus `tests/` läuft die neuen Suiten mit.
-- [ ] Doku in `tests/README` o. ä. wie man Sim-Tests hinzufügt.
+- [ ] `stl-metrics.py` produces reproducible metrics.
+- [ ] `tests/simTests` with ≥ 4 tests, all green (except `SmallToolTest`, which until P3 is
+      marked as a known failure or parked via `disable`).
+- [ ] `tests/plannerTests` with ≥ 3 tests, all green.
+- [ ] `./testHarness` from `tests/` also runs the new suites.
+- [ ] Documentation in `tests/README` or similar on how to add sim tests.
 
-## Hinweise
+## Notes
 
-- Falls `testHarness` Positionsargumente/Datei-IO nicht direkt unterstützt, ist der
-  Wrapper-Skript-Ansatz (Schritt 2) der robusteste Weg — `command` kapselt den
-  camsim-Aufruf vollständig.
-- Resolution bewusst grob wählen (wenige Voxel) → kleine STL, schnelle Tests.
+- If `testHarness` does not directly support positional arguments / file I/O, the
+  wrapper-script approach (step 2) is the most robust path — `command` fully encapsulates the
+  camsim invocation.
+- Deliberately choose a coarse resolution (few voxels) → small STL, fast tests.

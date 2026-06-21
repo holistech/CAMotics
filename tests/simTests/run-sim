@@ -1,15 +1,15 @@
 #!/bin/bash
 #
-# Test-Wrapper fuer camsim-basierte Simulationstests.
+# Test wrapper for camsim-based simulation tests.
 #
-# Ruft camsim deterministisch (--threads=1) auf ein .camotics-Projekt auf und gibt
-# die stabilen STL-Kennzahlen (siehe stl-metrics.py) nach stdout aus. camsim-eigene
-# Ausgaben (Fortschritt/Zeiten, nicht deterministisch) werden unterdrueckt, damit nur
-# die Kennzahlen mit den Golden-Files verglichen werden.
+# Invokes camsim deterministically (--threads=1) on a .camotics project and prints
+# the stable STL metrics (see stl-metrics.py) to stdout. camsim's own output
+# (progress/timings, non-deterministic) is suppressed so that only the metrics
+# are compared against the golden files.
 #
-# Aufruf (aus tests/simTests/test.json):  run-sim <projekt.camotics> [threads]
-# threads ist optional (Default 1 fuer Determinismus); 0 testet den
-# Klemm-Guard in Renderer::render (darf nicht haengen).
+# Usage (from tests/simTests/test.json):  run-sim <project.camotics> [threads]
+# threads is optional (default 1 for determinism); 0 exercises the clamp
+# guard in Renderer::render (must not hang).
 #
 set -u
 here="$(cd "$(dirname "$0")" && pwd)"

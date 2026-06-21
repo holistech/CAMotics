@@ -1,6 +1,6 @@
-# Regressionstest fuer K-2 (PyPtr Copy-Ctor) und L-2 (PyJSON Refcount-Lecks).
-# Ein Doppel-DECREF / Refcount-Underflow wuerde diese Schleifen zum Absturz
-# bringen. Triggert die toJSON-Pfade (Dict/List/verschachtelt) wiederholt.
+# Regression test for K-2 (PyPtr copy ctor) and L-2 (PyJSON refcount leaks).
+# A double DECREF / refcount underflow would crash these loops.
+# Repeatedly triggers the toJSON paths (dict/list/nested).
 import camotics, gc
 
 gcode = "G21 G90\nG0 X0 Y0 Z0\nG1 X10 F100\nG1 Y10\nM2\n"

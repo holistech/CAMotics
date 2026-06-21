@@ -1,59 +1,58 @@
 # P3 — Simulation / Contour / Render: Fixes + Tests
 
-**Ziel:** Den kritischen Simulations-Bug (K-1) und die Robustheits-/Numerikdefekte in
-`sim/`, `contour/`, `render/` beheben — verifiziert über den in P1 geschaffenen
-Sim-Test-Harness.
+**Goal:** Fix the critical simulation bug (K-1) and the robustness/numerics defects in
+`sim/`, `contour/`, `render/` — verified via the simulation test harness created in P1.
 
-**Status:** ⬜ offen · **Befunde:** S-1…S-12 (Details siehe `CODE_REVIEW.md` §3.2)
-**Abhängigkeit:** P1 (Sim-Harness muss stehen).
+**Status:** ⬜ open · **Findings:** S-1…S-12 (details see `CODE_REVIEW.md` §3.2)
+**Dependency:** P1 (sim harness must be in place).
 
 ---
 
-## Fixes (priorisiert)
+## Fixes (prioritized)
 
-| ID | Schweregrad | Datei:Zeile | Fix-Kern |
+| ID | Severity | File:Line | Fix Core |
 |----|-------------|-------------|----------|
-| S-1 (**K-1**) | **KRITISCH** | `sim/Sweep.cpp:33-35` | `double maxLen = radius * 16;`, `radius > 0` sicherstellen, `steps = (maxLen <= 0 \|\| len <= maxLen) ? 1 : ceil(len/maxLen)`. |
-| S-2 | HOCH | `sim/CutWorkpiece.cpp:34-43` | `isValid()`-Logik korrigieren oder toten Code entfernen. |
-| S-3 | MITTEL | `sim/Simulation.cpp:63-89`, `.h:50-53` | `threads` in `read()` lesen; In-Class-Initializer für `threads/resolution/time`. |
-| S-4 | MITTEL | `render/Renderer.cpp:61,76` | `threads = std::max(1u, threads);` am Methodenanfang. |
-| S-5 | MITTEL | `contour/CorrectedMC33.cpp:31-46` | `count>0`-Schutz; korrekte Aktiv-Kanten-Maske; `centerComputed` setzen. |
-| S-6 | MITTEL | `sim/ConicSweep.cpp:65,73`, `sim/SpheroidSweep.cpp:35,62` | Epsilon-Toleranzen statt exakter Float-Vergleiche. |
-| S-7 | MITTEL | `contour/CorrectedMC33Cube.cpp:130,150-180` | Nenner/Diskriminante auf ~0 prüfen, definierter Fallback. |
-| S-8 | MITTEL | `sim/ToolSweep.cpp:111-134` | `depth()`-Hot-Path: Heap-`vector`/`sort` pro Voxel-Ecke vermeiden (vorsortiert/Small-Buffer). |
-| S-9 | NIEDRIG | `sim/OctTree.cpp` | Toten Code entfernen (→ ggf. nach P6 verschieben). |
-| S-10 | NIEDRIG | `sim/AABB.cpp:31-122` | Rekursionstiefe begrenzen; Methoden `const`. |
-| S-11 | NIEDRIG | `sim/Workpiece.cpp:28-32` | Ungenutzte Member entfernen. |
-| S-12 | NIEDRIG | `render/Renderer.cpp:101` | Unsigned-Underflow im Fortschritt vermeiden (signed/clamp). |
-| S-13 | HOCH | `camsim.cpp:134-135` | `bounds` wird VOR `update(*path)` gelesen → bei automatischem Workpiece leere Bounds → „Empty workpiece, nothing to simulate". Macht `camsim` für reinen G-code/TPL ohne explizite Bounds unbrauchbar. **Während P1 entdeckt.** Fix: Reihenfolge tauschen (erst `update`, dann `getBounds`). |
+| S-1 (**K-1**) | **CRITICAL** | `sim/Sweep.cpp:33-35` | `double maxLen = radius * 16;`, ensure `radius > 0`, `steps = (maxLen <= 0 \|\| len <= maxLen) ? 1 : ceil(len/maxLen)`. |
+| S-2 | HIGH | `sim/CutWorkpiece.cpp:34-43` | Correct `isValid()` logic or remove dead code. |
+| S-3 | MEDIUM | `sim/Simulation.cpp:63-89`, `.h:50-53` | Read `threads` in `read()`; in-class initializers for `threads/resolution/time`. |
+| S-4 | MEDIUM | `render/Renderer.cpp:61,76` | `threads = std::max(1u, threads);` at the start of the method. |
+| S-5 | MEDIUM | `contour/CorrectedMC33.cpp:31-46` | `count>0` guard; correct active-edge mask; set `centerComputed`. |
+| S-6 | MEDIUM | `sim/ConicSweep.cpp:65,73`, `sim/SpheroidSweep.cpp:35,62` | Epsilon tolerances instead of exact float comparisons. |
+| S-7 | MEDIUM | `contour/CorrectedMC33Cube.cpp:130,150-180` | Check denominator/discriminant for ~0, defined fallback. |
+| S-8 | MEDIUM | `sim/ToolSweep.cpp:111-134` | `depth()` hot path: avoid heap `vector`/`sort` per voxel corner (pre-sorted/small buffer). |
+| S-9 | LOW | `sim/OctTree.cpp` | Remove dead code (→ possibly move to P6). |
+| S-10 | LOW | `sim/AABB.cpp:31-122` | Limit recursion depth; methods `const`. |
+| S-11 | LOW | `sim/Workpiece.cpp:28-32` | Remove unused members. |
+| S-12 | LOW | `render/Renderer.cpp:101` | Avoid unsigned underflow in the progress (signed/clamp). |
+| S-13 | HIGH | `camsim.cpp:134-135` | `bounds` is read BEFORE `update(*path)` → empty bounds for an automatic workpiece → "Empty workpiece, nothing to simulate". Makes `camsim` unusable for plain G-code/TPL without explicit bounds. **Discovered during P1.** Fix: swap the order (first `update`, then `getBounds`). |
 
-> **S-13 / Test-Vereinfachung:** Sobald S-13 behoben ist, können die `simTests` auf reine
-> G-code-Inputs mit automatischem Workpiece umgestellt werden (statt `.camotics`-Projekten
-> mit festen Bounds). Bis dahin nutzen die Tests feste Bounds — siehe `tests/README.md`.
+> **S-13 / test simplification:** Once S-13 is fixed, the `simTests` can be switched to plain
+> G-code inputs with an automatic workpiece (instead of `.camotics` projects
+> with fixed bounds). Until then the tests use fixed bounds — see `tests/README.md`.
 
-## Tests (verzahnt)
+## Tests (interlocked)
 
-- **S-1 / K-1:** `SmallToolTest` aus P1 aktivieren — muss nach dem Fix korrektes,
-  nicht-leeres Mesh liefern (Kennzahlen > 0). Vor dem Fix dokumentiert fehlerhaft.
-- **S-4:** Sim-Test mit `--threads 0` → darf nicht hängen, muss korrektes Ergebnis
-  liefern (Harness mit Timeout absichern).
-- **S-2:** Falls `isValid()` reaktiviert wird, gezielter Unit-artiger Test über `camsim`.
-- **S-6:** Sim-Test mit nahezu vertikaler Werkzeugbahn (Conic/Spheroid-Sonderfall) →
-  stabile Oberfläche statt NaN/Artefakt.
-- **Regressionsschutz:** Die in P1 angelegten `BoxMill/Drill/ArcMill`-Kennzahlen dürfen
-  sich durch die Numerik-Fixes nur erwartungsgemäß ändern (Golden ggf. bewusst neu setzen,
-  Änderung im Status begründen).
+- **S-1 / K-1:** Activate `SmallToolTest` from P1 — after the fix it must produce a correct,
+  non-empty mesh (metrics > 0). Documented as faulty before the fix.
+- **S-4:** Sim test with `--threads 0` → must not hang, must produce a correct result
+  (secure the harness with a timeout).
+- **S-2:** If `isValid()` is reactivated, a targeted unit-style test via `camsim`.
+- **S-6:** Sim test with a nearly vertical tool path (conic/spheroid special case) →
+  stable surface instead of NaN/artifact.
+- **Regression protection:** The `BoxMill/Drill/ArcMill` metrics created in P1 may only
+  change as expected due to the numerics fixes (golden possibly reset deliberately,
+  justify the change in the status).
 
-## Abnahmekriterien
+## Acceptance Criteria
 
-- [ ] K-1 behoben und durch `SmallToolTest` belegt (grün).
-- [ ] Kein Hänger bei `threads==0` (Test mit Timeout grün).
-- [ ] Alle S-Befunde behoben oder explizit nach P6 verschoben (toter Code).
-- [ ] Build grün; alle Sim- und Bestandstests grün.
+- [ ] K-1 fixed and proven by `SmallToolTest` (green).
+- [ ] No hang at `threads==0` (test with timeout green).
+- [ ] All S findings fixed or explicitly moved to P6 (dead code).
+- [ ] Build green; all sim and existing tests green.
 
-## Risiken
+## Risks
 
-- S-5/S-7 (Marching-Cubes-Numerik) können die erzeugte Oberfläche verändern → Kennzahl-
-  Goldens der Sim-Tests genau prüfen; Änderungen visuell/numerisch plausibilisieren.
-- S-8 (Hot-Path-Umbau) ist eine Performance-Optimierung mit Korrektheitsrisiko → nur mit
-  Kennzahl-Gleichheit vorher/nachher mergen; sonst zurückstellen.
+- S-5/S-7 (marching-cubes numerics) may alter the generated surface → check the metric
+  goldens of the sim tests carefully; validate changes visually/numerically for plausibility.
+- S-8 (hot-path rebuild) is a performance optimization with a correctness risk → merge only with
+  metric equality before/after; otherwise defer.

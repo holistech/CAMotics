@@ -1,20 +1,20 @@
 #!/bin/bash
 #
-# GUI-Smoke-Test: startet camotics headless (unter Xvfb), laedt ein Projekt,
-# laesst es die Oberflaeche berechnen und per OpenGL rendern, und beendet es
-# dann per SIGTERM.  Erfolg = SAUBERER Exit (Code 0): camotics faengt SIGTERM
-# ab (FEATURE_SIGNAL_HANDLER), der QTimer-Poll in QtApp::run beendet die
-# Qt-Event-Loop, und die App faehrt regulaer herunter.  Damit verriegelt dieser
-# Test auch den sauberen Shutdown.  Harte Terminierung (143) oder Absturz
-# (SIGSEGV=139, SIGABRT=134) lassen den Test fehlschlagen.
+# GUI smoke test: starts camotics headless (under Xvfb), loads a project,
+# has it compute the surface and render it via OpenGL, and then terminates it
+# via SIGTERM.  Success = a CLEAN exit (code 0): camotics catches SIGTERM
+# (FEATURE_SIGNAL_HANDLER), the QTimer poll in QtApp::run ends the
+# Qt event loop, and the app shuts down normally.  This test thereby also
+# locks in the clean shutdown.  Hard termination (143) or a crash
+# (SIGSEGV=139, SIGABRT=134) makes the test fail.
 #
-# Treibt die sonst ungetesteten GUI-Module (qt/, view/, value/) plus die
-# Simulations-/Rendering-Pipeline.  Benoetigt xvfb-run.
+# Exercises the otherwise untested GUI modules (qt/, view/, value/) plus the
+# simulation/rendering pipeline.  Requires xvfb-run.
 #
 set -u
 here="$(cd "$(dirname "$0")" && pwd)"
 
-# Unter virtuellem Display re-ausfuehren, falls noch nicht geschehen.
+# Re-exec under a virtual display if not already done.
 if [ -z "${GUI_TEST_XVFB:-}" ]; then
   if ! command -v xvfb-run >/dev/null 2>&1; then
     echo "xvfb-run not available" >&2
@@ -30,7 +30,7 @@ project="$1"
 "$camotics" "$project" >/dev/null 2>&1 &
 pid=$!
 
-sleep 6                       # GUI-Init + Projekt laden + Surface rendern
+sleep 6                       # GUI init + load project + render surface
 kill -TERM "$pid" 2>/dev/null
 wait "$pid"
 ec=$?

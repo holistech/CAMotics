@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
 #
-# Extrahiert deterministische Kennzahlen aus einer STL-Datei (ASCII oder Binär).
+# Extracts deterministic metrics from an STL file (ASCII or binary).
 #
-# Zweck: Simulationsergebnisse von CAMotics (camsim) reproduzierbar testen, ohne
-# die rohe STL byteweise zu vergleichen. Die Facetten-REIHENFOLGE variiert je nach
-# Thread-Partitionierung; die hier berechneten Kennzahlen sind ordnungs- und
-# (durch Rundung) FP-rausch-unabhaengig:
+# Purpose: test CAMotics (camsim) simulation results reproducibly without
+# comparing the raw STL byte by byte. The facet ORDER varies with the
+# thread partitioning; the metrics computed here are order-independent and
+# (through rounding) FP-noise-independent:
 #
-#   - facets:  Anzahl der Dreiecke
-#   - bbox:    Bounding-Box (min/max je Achse), gerundet
-#   - volume:  geschlossenes, vorzeichenbehaftetes Volumen (Summe der Tetraeder
-#              zum Ursprung), gerundet
-#   - area:    Gesamt-Oberflaeche, gerundet
+#   - facets:  number of triangles
+#   - bbox:    bounding box (min/max per axis), rounded
+#   - volume:  closed, signed volume (sum of the tetrahedra
+#              to the origin), rounded
+#   - area:    total surface area, rounded
 #
-# Aufruf: stl-metrics.py <datei.stl> [nachkommastellen]
+# Usage: stl-metrics.py <file.stl> [decimals]
 #
 import sys
 import struct
@@ -37,7 +37,7 @@ def read_ascii(path):
 def read_binary(path):
     tris = []
     with open(path, 'rb') as f:
-        f.read(80)                       # Header
+        f.read(80)                       # header
         (count,) = struct.unpack('<I', f.read(4))
         for _ in range(count):
             data = f.read(50)            # 12 floats + 2 byte attribute
@@ -58,7 +58,7 @@ def is_ascii_stl(path):
 
 
 def signed_volume(a, b, c):
-    # Vorzeichenbehaftetes Volumen des Tetraeders (Ursprung, a, b, c) * 6
+    # Signed volume of the tetrahedron (origin, a, b, c) * 6
     return (a[0]*(b[1]*c[2] - b[2]*c[1])
             - a[1]*(b[0]*c[2] - b[2]*c[0])
             + a[2]*(b[0]*c[1] - b[1]*c[0]))

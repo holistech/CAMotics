@@ -1,47 +1,46 @@
-# P6 — Cleanup & finale Verifikation
+# P6 — Cleanup & Final Verification
 
-**Ziel:** Toten Code entfernen, veraltete APIs abschließen, Dokumentation aktualisieren
-und die erreichte Testabdeckung mit einer echten gcov/lcov-Messung belegen.
+**Goal:** Remove dead code, finalize deprecated APIs, update the documentation
+and back the achieved test coverage with a real gcov/lcov measurement.
 
-**Status:** ⬜ offen
+**Status:** ⬜ open
 
 ---
 
-## Aufgaben
+## Tasks
 
-1. **Toten Code entfernen** (sofern nicht schon in P3 erledigt):
-   - `sim/OctTree.cpp` (S-9) — ungenutzt, falls bestätigt.
-   - `sim/Workpiece.cpp` ungenutzte Member (S-11).
-   - `sim/CutWorkpiece::isValid` (S-2), falls als toter Code eingestuft.
-   - Weitere bei den Fixes entdeckte Leichen.
+1. **Remove dead code** (unless already done in P3):
+   - `sim/OctTree.cpp` (S-9) — unused, if confirmed.
+   - `sim/Workpiece.cpp` unused members (S-11).
+   - `sim/CutWorkpiece::isValid` (S-2), if classified as dead code.
+   - Further corpses discovered during the fixes.
 
-2. **Veraltete Qt-APIs** abschließen (Rest aus P5, Qt6-Vorbereitung):
-   `QString::sprintf`, `QGLFormat`, `event->delta()` flächendeckend prüfen.
+2. **Finalize deprecated Qt APIs** (remainder from P5, Qt6 preparation):
+   Check `QString::sprintf`, `QGLFormat`, `event->delta()` comprehensively.
 
-3. **Dokumentation aktualisieren:**
-   - `CLAUDE.md`: Hinweis auf neue Test-Suiten (`simTests`, `plannerTests`, `stlTests`)
-     und wie man sie ausführt/erweitert.
-   - `CODE_REVIEW.md`: Befunde als behoben markieren (Querverweis auf Projekte).
-   - `tests/README` o. ä.: Anleitung zum Hinzufügen von Sim-/Parser-Tests.
+3. **Update documentation:**
+   - `CLAUDE.md`: Note about the new test suites (`simTests`, `plannerTests`, `stlTests`)
+     and how to run/extend them.
+   - `CODE_REVIEW.md`: Mark findings as fixed (cross-reference to the projects).
+   - `tests/README` or similar: Instructions for adding sim/parser tests.
 
-4. **Finale Coverage-Messung (gcov/lcov):**
-   - CAMotics **und** cbang mit `--coverage` (`-fprofile-arcs -ftest-coverage`) bauen.
-     In SConstruct über eine Build-Variable (z. B. `coverage=1`) zuschaltbar machen.
-   - Komplette Testsuite laufen lassen, `lcov`/`genhtml`-Report erzeugen.
-   - Zeilen-/Funktions-Coverage pro Modul im Status festhalten (Vorher/Nachher).
+4. **Final coverage measurement (gcov/lcov):**
+   - Build CAMotics **and** cbang with `--coverage` (`-fprofile-arcs -ftest-coverage`).
+     Make it switchable in SConstruct via a build variable (e.g. `coverage=1`).
+   - Run the complete test suite, generate an `lcov`/`genhtml` report.
+   - Record line/function coverage per module in the status (before/after).
 
-5. **Gesamt-Regressionslauf:** `scons -j$(nproc)` + komplette `testHarness`-Suite grün.
+5. **Overall regression run:** `scons -j$(nproc)` + complete `testHarness` suite green.
 
-## Abnahmekriterien
+## Acceptance Criteria
 
-- [ ] Kein bekannter toter Code mehr (oder bewusst dokumentiert belassen).
-- [ ] Doku (CLAUDE.md, CODE_REVIEW.md, Test-README) aktuell.
-- [ ] gcov/lcov-Report erzeugt; Coverage-Zahlen pro Modul im Status.
-- [ ] Vollständiger Build + alle Tests grün.
-- [ ] STATUS.md final: alle Projekte ✅, Befundbilanz vollständig.
+- [ ] No more known dead code (or deliberately left in and documented).
+- [ ] Docs (CLAUDE.md, CODE_REVIEW.md, test README) up to date.
+- [ ] gcov/lcov report generated; coverage numbers per module in the status.
+- [ ] Complete build + all tests green.
+- [ ] STATUS.md final: all projects ✅, finding tally complete.
 
-## Risiken
+## Risks
 
-- Coverage-Build erfordert instrumentiertes cbang → ggf. separater Build-Baum; falls zu
-  aufwändig, mindestens CAMotics-eigene Objekte instrumentieren und die Einschränkung
-  dokumentieren.
+- The coverage build requires an instrumented cbang → possibly a separate build tree; if too
+  costly, instrument at least CAMotics' own objects and document the limitation.
