@@ -30,9 +30,14 @@ using namespace CAMotics;
 void Sweep::getBBoxes(const Vector3D &start, const Vector3D &end,
                       vector<Rectangle3D> &bboxes, double radius,
                       double length, double zOffset, double tolerance) const {
-  const unsigned maxLen = radius * 16;
+  // NOTE: maxLen must be double.  Truncating to unsigned made maxLen == 0 for
+  // tools with radius < 1/16 unit (common with imperial units or engraving
+  // bits), after which (len / maxLen) divided by zero and the swept bounding
+  // boxes were silently dropped -- the tool removed no material at all.
+  double maxLen = radius * 16;
   double len = start.distance(end);
-  unsigned steps = (len <= maxLen) ? 1 : (len / maxLen);
+  unsigned steps =
+    (maxLen <= 0 || len <= maxLen) ? 1 : (unsigned)(len / maxLen);
   double stride = 1.0 / steps;
   Vector3D p1 = start;
   Vector3D p2;

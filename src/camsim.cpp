@@ -130,9 +130,11 @@ namespace CAMotics {
       // Generate tool path
       SmartPointer<GCode::ToolPath> path = cutSim.computeToolPath(project);
 
-      // Simulate
-      Rectangle3D bounds = project.getWorkpiece().getBounds();
+      // Simulate.  update() must run first: for an automatic workpiece it
+      // computes the bounds from the tool path, so reading getBounds() before
+      // update() yielded an empty workpiece ("nothing to simulate").
       project.getWorkpiece().update(*path);
+      Rectangle3D bounds = project.getWorkpiece().getBounds();
 
       Simulation sim(path, 0, 0, bounds, project.getResolution(),
                      time ? time : numeric_limits<double>::max(),

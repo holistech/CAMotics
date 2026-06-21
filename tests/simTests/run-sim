@@ -7,18 +7,22 @@
 # Ausgaben (Fortschritt/Zeiten, nicht deterministisch) werden unterdrueckt, damit nur
 # die Kennzahlen mit den Golden-Files verglichen werden.
 #
-# Aufruf (aus tests/simTests/test.json):  run-sim <projekt.camotics>
+# Aufruf (aus tests/simTests/test.json):  run-sim <projekt.camotics> [threads]
+# threads ist optional (Default 1 fuer Determinismus); 0 testet den
+# Klemm-Guard in Renderer::render (darf nicht haengen).
 #
 set -u
 here="$(cd "$(dirname "$0")" && pwd)"
 camsim="$here/../../camsim"
 metrics="$here/stl-metrics.py"
 project="$1"
+threads="${2:-1}"
 
 tmp="$(mktemp)"
 trap 'rm -f "$tmp"' EXIT
 
-if ! "$camsim" --threads=1 --binary=false "$project" "$tmp" >/dev/null 2>&1; then
+if ! "$camsim" --threads="$threads" --binary=false "$project" "$tmp" \
+     >/dev/null 2>&1; then
   echo "camsim failed on $project" >&2
   exit 1
 fi

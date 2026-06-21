@@ -47,10 +47,12 @@ namespace CAMotics {
     cb::SmartPointer<GCode::PlannerConfig> planConf;
     cb::SmartPointer<Surface> surface;
     Workpiece workpiece;
-    double resolution;
-    double time;
+    // In-class initializers guarantee defined values even when the object is
+    // default-constructed / deserialized (read() does not set all of these).
+    double resolution = 0;
+    double time = 0;
     RenderMode mode;
-    unsigned threads;
+    unsigned threads = 1;
 
     Simulation(const cb::SmartPointer<GCode::ToolPath> &path,
                const cb::SmartPointer<GCode::PlannerConfig> &planConf,

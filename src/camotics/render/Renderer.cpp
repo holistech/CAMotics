@@ -43,6 +43,10 @@ using namespace CAMotics;
 void Renderer::render(CutWorkpiece &cutWorkpiece, GridTree &tree,
                       const Rectangle3D &bbox, unsigned threads,
                       RenderMode mode) {
+  // At least one thread: threads == 0 would make log(threads) below -inf and
+  // the "jobs.size() < threads" loop never start a job (infinite hang).
+  if (threads < 1) threads = 1;
+
   // Check for empty workpiece
   auto bounds = tree.getBounds();
   if (!bounds.isValid()) {
@@ -97,8 +101,10 @@ void Renderer::render(CutWorkpiece &cutWorkpiece, GridTree &tree,
       for (it = jobs.begin(); it != jobs.end() && !task.shouldQuit(); it++)
         progress += (*it)->getProgress();
 
-      // Add completed jobs
-      progress += totalJobCount - jobGrids.size() - jobs.size();
+      // Add completed jobs (clamp: avoid unsigned underflow to a huge value if
+      // the running + queued count ever transiently exceeds the total)
+      size_t remaining = jobGrids.size() + jobs.size();
+      if (remaining < totalJobCount) progress += totalJobCount - remaining;
       progress /= totalJobCount;
 
       task.update(progress);

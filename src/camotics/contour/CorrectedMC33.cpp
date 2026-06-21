@@ -33,13 +33,17 @@ const Vector3D &CorrectedMC33::getCenter(uint8_t index) {
     center = Vector3D();
 
     unsigned count = 0;
+    // NOTE: index is an 8-bit case number; bits 8..11 are therefore never set,
+    // so this averages over at most 8 edges.  Left as-is to avoid altering the
+    // MC33 topology; only the divide-by-zero guard and cache are corrected here.
     for (unsigned i = 0; i < 12; i++)
       if (index & (1 << i)) {
         count++;
         center += edges[i].vertex;
       }
 
-    center /= count;
+    if (count) center /= count; // Guard against an empty edge mask (NaN)
+    centerComputed = true;      // Cache the result for this cell (index is fixed)
   }
 
   return center;

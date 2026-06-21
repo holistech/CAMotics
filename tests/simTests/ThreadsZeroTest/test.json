@@ -1,0 +1,4 @@
+{
+  "command": "%(suite-dir)s/run-sim %(data-dir)s/project.camotics 0",
+  "timeout": 60
+}

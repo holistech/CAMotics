@@ -1,0 +1,6 @@
+{
+  "units": "metric", "resolution-mode": "manual", "resolution": 0.1,
+  "tools": {"1": {"units": "metric", "shape": "cylindrical", "length": 5, "diameter": 0.1, "description": ""}},
+  "workpiece": {"automatic": false, "margin": 5, "bounds": {"min": [0, 0, -1], "max": [2, 2, 0]}},
+  "files": ["small.gcode"]
+}

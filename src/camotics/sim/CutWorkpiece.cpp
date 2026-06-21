@@ -32,8 +32,9 @@ CutWorkpiece::CutWorkpiece(const SmartPointer<ToolSweep> &toolSweep,
 
 
 bool CutWorkpiece::isValid() const {
-  if (workpiece.isValid()) return false;
-
+  // Valid when the combined bounds (workpiece and/or tool sweep, see
+  // getBounds()) are finite.  The previous "if (workpiece.isValid()) return
+  // false" was inverted and reported a valid workpiece as invalid.
   Rectangle3D bounds = getBounds();
   for (unsigned i = 0; i < 3; i++)
     if (isnan(bounds.getMin()[i]) || isnan(bounds.getMax()[i]) ||

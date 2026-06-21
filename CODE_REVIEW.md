@@ -38,9 +38,11 @@ Der Review fördert jedoch eine Reihe **konkreter Korrektheits- und Robustheitsd
 ```cpp
 const unsigned maxLen = radius * 16;   // <-- Trunkierung auf unsigned
 ```
-Für Werkzeuge mit Radius < 1/16 Einheit (häufig bei Zoll-Einheiten oder Graviersticheln) wird `maxLen == 0`. Dann ergibt `steps = len / maxLen` eine Division durch 0 → `inf`, dessen Cast nach `unsigned` UB ist (praktisch `steps = 0`). Die BBox-Schleife läuft nie → der **komplette Sweep dieses Moves wird stillschweigend verworfen**: fehlender Materialabtrag, ohne jede Fehlermeldung.
+Für Werkzeuge mit Radius < 1/16 Einheit (häufig bei Zoll-Einheiten oder Graviersticheln) wird `maxLen == 0`. Dann ergibt `steps = len / maxLen` eine Division durch 0 → `inf`, dessen Cast nach `unsigned` **undefiniertes Verhalten** ist.
 
-**Fix:** `double maxLen = radius * 16;`, `radius > 0` sicherstellen, `steps = (maxLen <= 0 || len <= maxLen) ? 1 : (unsigned)ceil(len / maxLen);`
+**Präzisierung nach Verifikation (Fix in `test-suite`-Branch):** Das Symptom ist plattformabhängig. Auf x86/gcc liefert `(unsigned)inf` hier zufällig einen großen Wert, sodass *zu viele* BBoxen erzeugt werden und die Simulation mit falschen Kennzahlen, aber nicht-leerem Ergebnis durchläuft (gemessen: 3356 statt korrekt 3740 Facetten im Regressionstest). Auf Plattformen, wo `(unsigned)inf == 0`, läuft die BBox-Schleife null-mal → **kompletter Sweep verworfen, kein Materialabtrag**. In jedem Fall ist das Ergebnis falsch und das Verhalten UB.
+
+**Fix (umgesetzt):** `double maxLen = radius * 16;` mit `(maxLen <= 0 || len <= maxLen) ? 1 : (unsigned)(len / maxLen)`. Beseitigt UB und Division durch 0; Normalfall (ganzzahliges `radius*16`) bleibt bit-identisch. Regressionstest: `tests/simTests/SmallToolTest`.
 
 ### K-2 — `PyPtr` verletzt Rule-of-Three → Doppel-DECREF / Use-after-free
 **`src/python/PyPtr.h:26-45`** — KRITISCH

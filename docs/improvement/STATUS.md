@@ -14,7 +14,7 @@ und den Aufbau einer vollständigen Testsuite.
 |---------|-------|:------:|:---------------:|:---------:|:-----:|:----------:|
 | [P1](P1-test-infrastructure.md) | Test-Infrastruktur & Simulations-Harness | ✅ abgeschlossen | — | 6 | ✅ | ✅ 31/31 |
 | [P2](P2-gcode-engine.md) | G-code-Engine: Fixes + Tests | ✅ abgeschlossen | 10 fix / 4 bewertet | 11 | ✅ | ✅ 42/42 |
-| [P3](P3-simulation.md) | Simulation/Contour/Render: Fixes + Tests | ⬜ offen | 0/13 | 0 | — | — |
+| [P3](P3-simulation.md) | Simulation/Contour/Render: Fixes + Tests | ✅ abgeschlossen | 7 fix / 3 bewertet / 3→P6 | 2 | ✅ | ✅ 44/44 |
 | [P4](P4-bindings-io.md) | Sprach-Bindings & IO + Security | ⬜ offen | 0/15 | 0 | — | — |
 | [P5](P5-gui.md) | GUI: Fixes | ⬜ offen | 0/14 | 0 | — | — |
 | [P6](P6-cleanup.md) | Cleanup & finale Verifikation | ⬜ offen | — | — | — | — |
@@ -41,6 +41,9 @@ Status-Legende: ⬜ offen · 🟡 in Arbeit · ✅ abgeschlossen · ⛔ blockier
 | 2026-06-21 | P1→P3 | Neuer Befund **S-13** entdeckt: `camsim.cpp:134` liest `bounds` vor `update()` → automatisches Workpiece liefert leeres Ergebnis. In CODE_REVIEW + P3 dokumentiert. |
 | 2026-06-21 | P2 | **10 Fixes** umgesetzt: G-1 (Tool-Sentinel `int`), G-2 (drill L validieren), G-3 (Div/0 + SQRT/LN/ACOS/ASIN-Domain werfen), G-5 (LineCommand offset), G-6 (Rekursionstiefe werfen), G-7 (specialComment Iterator), G-9 (arc coincident points), G-11 (`1ULL`-Shift), G-13 (LinePlanner-Lecks/pop_back), G-14 (activeMotion Null-Check). **11 Tests** neu (6 errorTests + 5 gcodeTests). Suite: 31 → **42 grün**. |
 | 2026-06-21 | P2 | **4 Befunde differenziert bewertet (kein blinder Fix):** G-4, G-8, G-10, G-12 — siehe P2-Abschlussnotizen. G-10 war ein **Fehlbefund** (Code bereits korrekt). |
+| 2026-06-21 | — | P1+P2 in Branch `test-suite` committet (3 Commits: docs / P1 / P2). |
+| 2026-06-21 | P3 | **7 Fixes:** K-1/S-1 (Sweep unsigned-UB, **kritisch**), S-2 (isValid invertiert), S-3 (Simulation-Member init), S-4 (Renderer threads==0 Hänger), S-5 (MC33 NaN-Guard + Cache), S-12 (Fortschritt-Underflow), S-13 (camsim bounds-Reihenfolge). **2 Tests** neu (SmallToolTest=K-1-Regression, ThreadsZeroTest=S-4). Suite: 42 → **44 grün**. |
+| 2026-06-21 | P3 | **K-1 präzisiert:** Symptom ist UB-bedingt plattformabhängig (x86/gcc: falsche Facettenzahl statt Totalausfall) — durch Gegentest belegt (buggy 3356 ≠ fixed 3740). |
 
 ---
 
@@ -79,6 +82,28 @@ blindem Patchen:
 Ebenfalls notiert: **G83 (Peck-Drilling)** ist im Code als `// TODO Peck drill`
 (`ControllerImpl.cpp:1148`) markiert — Q wird ignoriert, ein Durchgang statt Pecking.
 Bekannte Nicht-Implementierung, kein versteckter Defekt.
+
+## P3 — Abschlussnotizen (differenziert bewertete Befunde)
+
+- **S-6 (exakte Float-Vergleiche Conic/Spheroid-Sweep): konservativ belassen.** Die
+  `epsilon == 0`-Vergleiche sind theoretisch fragil, aber der Code funktioniert und liefert
+  korrekte Oberflächen. Ein Toleranz-Fix (`fabs(epsilon) < eps`) an dieser Kern-Sweep-
+  Routine hätte hohes Regressionsrisiko (willkürliche Schwelle, schwer zu verifizieren) ohne
+  nachgewiesenen Defekt. Zurückgestellt, bis ein reproduzierbares Artefakt vorliegt.
+- **S-7 (ungeschützte Divisionen/sqrt in CorrectedMC33Cube): verifiziert, belassen.** Die
+  entstehenden NaN/inf propagieren **sicher** durch die nachfolgenden Vergleiche
+  (`t1 < 1 && 0 < t1 && …` ergeben bei NaN `false`) zu definierten Code-Pfaden — **kein
+  Crash, kein klassisches UB** (IEEE-NaN ist wohldefiniert). Ein korrekter Fallback für
+  degenerierte Zellen erfordert MC33-Algorithmus-Expertise; ein willkürlicher Guard würde
+  die Tiling-Auswahl riskieren statt verbessern.
+- **S-5 (getCenter): teilweise.** NaN-Guard (`count>0`) und Cache-Aktivierung umgesetzt
+  (beide ohne Normalfall-Änderung, Goldens stabil). Die heikle 8-bit-Fallnummer-vs-12-bit-
+  Kantenmaske-Semantik wurde **bewusst nicht** angetastet (MC33-Topologie-Risiko), nur im
+  Code kommentiert.
+- **S-8 (ToolSweep::depth Hot-Path): zurückgestellt.** Performance-Optimierung, kein
+  Korrektheitsbug. Laut Plan nur mit nachgewiesener Kennzahl-Gleichheit vorher/nachher zu
+  mergen — als eigenständige, sorgfältig zu benchmarkende Aufgabe ausgelagert.
+- **S-9 / S-10 / S-11 (toter Code, const-Korrektheit): → P6** (Cleanup-Projekt).
 
 ## Offene Blocker / Entscheidungen
 
