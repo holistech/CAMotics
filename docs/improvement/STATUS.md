@@ -17,7 +17,7 @@ und den Aufbau einer vollständigen Testsuite.
 | [P3](P3-simulation.md) | Simulation/Contour/Render: Fixes + Tests | ✅ abgeschlossen | 7 fix / 3 bewertet / 3→P6 | 2 | ✅ | ✅ 44/44 |
 | [P4](P4-bindings-io.md) | Sprach-Bindings & IO + Security | ✅ abgeschlossen | 12 fix / 3 bewertet | 1 | ✅ | ✅ 45/45 |
 | [P5](P5-gui.md) | GUI: Fixes | ✅ abgeschlossen | 6 fix / 8 bewertet→P6 | 0 | ✅ | ✅ 45/45 |
-| [P6](P6-cleanup.md) | Cleanup & finale Verifikation | ⬜ offen | — | — | — | — |
+| [P6](P6-cleanup.md) | Cleanup & finale Verifikation | ✅ abgeschlossen | toter Code + Coverage | — | ✅ | ✅ 45/45 |
 
 Status-Legende: ⬜ offen · 🟡 in Arbeit · ✅ abgeschlossen · ⛔ blockiert
 
@@ -48,6 +48,8 @@ Status-Legende: ⬜ offen · 🟡 in Arbeit · ✅ abgeschlossen · ⛔ blockier
 | 2026-06-21 | P4 | **L-10 (XXE) verifiziert: kein Risiko.** cbang nutzt Expat ohne `XML_SetExternalEntityRefHandler`; `XML_SetParamEntityParsing` ist per Default `NEVER` → externe Entitäten werden nicht aufgelöst. Kein Fix nötig. |
 | 2026-06-21 | — | P3+P4 committet (2 Commits). |
 | 2026-06-21 | P5 | **6 Fixes:** U-1 (QStringListModel-Leak pro Resize, **HOCH**), U-2 (BBCtrlAPI uninit. Member), U-3 (Dangling `fromRawData` bei async PUT), U-4 (Observer-Lebenszeit dokumentiert+erzwungen), U-7 (line-1 uint32-Underflow), U-12 (GL-Uniform tolerieren statt Draw-Abbruch). GUI baut, camotics startet, 45 Tests grün. |
+| 2026-06-21 | — | P5 committet. |
+| 2026-06-21 | P6 | **Toter Code entfernt:** `sim/OctTree.{cpp,h}` (S-9, nirgends instanziiert), ungenutzte `Workpiece`-Member `center`/`halfDim2` (S-11). **gcov-Coverage-Option** zu SConstruct hinzugefügt (`coverage=1`). **Echte Coverage gemessen.** CLAUDE.md (Test-Suiten + Coverage) und CODE_REVIEW.md (Umsetzungsstatus) aktualisiert. 45 Tests grün. |
 
 ---
 
@@ -142,6 +144,37 @@ Folgende Befunde wurden differenziert behandelt:
 - **U-10 (`QString::sprintf`) / U-13 (`QGLFormat`, `event->delta()`): → P6** (Qt6-Vorbereitung).
 - **U-11 (QMenu/QMovie Parent) / U-14 (redraw-Drosselung): NIEDRIG, → P6.**
 
+## Finale Testabdeckung (gcov, gemessen 2026-06-21)
+
+Instrumentierter Build (`scons coverage=1 with_gui=0`), komplette Testsuite, gcov-Auswertung.
+GUI-Code (`qt/`, `view/`, `value/`) ist nicht instrumentiert (nicht automatisiert testbar).
+
+| Modul | Zeilen-Coverage | Bemerkung |
+|-------|:---------------:|-----------|
+| `gcode/parse` | 66,5 % | Tokenizer/Parser — gut abgedeckt |
+| `gcode/interp` | 57,9 % | Interpreter/Evaluator (inkl. neue Fehlerpfade) |
+| `gcode/ast` | 56,7 % | |
+| `gcode/plan` | 50,8 % | via `plannerTests` |
+| `gcode` (Kern) | 46,3 % | |
+| `gcode/machine` | 30,3 % | viele Output-Senken (JSON/GCode) ungetestet |
+| `camotics/sim` | 25,4 % | via `simTests` (vorher ~0 %) |
+| `camotics/project` | 25,0 % | |
+| `camotics/render` | 12,7 % | |
+| `camotics/contour` | 8,3 % | Marching Cubes — pro Test nur ein Tiling-Pfad |
+| `tplang` | 37,7 % | |
+| **Gesamt (getesteter Nicht-GUI-Code)** | **40,3 %** | **3684 / 9134 Zeilen** |
+
+Treiber-Binaries: `gcodetool` 90,5 %, `planner` 73,3 %, `camsim` 75,8 %, `tplang` 60,0 %.
+
+**Vorher → Nachher:** 25 → 45 Tests; 2 → 5 getriebene Binaries; G/M-Code-Abdeckung von ~5 %
+deutlich erhöht; `sim`/`contour`/`render` von praktisch 0 % auf messbare Abdeckung; Python-
+Bindings erstmals mit Regressionstest.
+
+### Empfehlungen für weitere Abdeckung (optional)
+- `gcode/machine` (30 %): Tests für JSON-/GCode-Machine-Ausgabesenken.
+- `camotics/contour` (8 %): Tests mit Geometrien, die verschiedene MC33-Tilings auslösen.
+- GUI: erfordert eine Display-fähige Test-Umgebung (z. B. Xvfb + Qt-Test) — eigenes Vorhaben.
+
 ## Offene Blocker / Entscheidungen
 
-_(keine)_
+_(keine — alle 6 Projekte abgeschlossen)_

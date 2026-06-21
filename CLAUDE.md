@@ -76,9 +76,32 @@ cd tests
 ./testHarness reset <target>  # delete a test's expect/ files (regenerate goldens)
 ```
 
-Test suites: `oCodeTests` (G-code O-codes/control flow), `offsetTests` (coordinate-system
-& tool offsets), `tplTests` (TPL), `varRefTests` (G-code variable references). Binaries
-must be built (`scons`) before running tests, since the harness invokes them by relative path.
+Test suites (driver in parentheses):
+- `oCodeTests` (`gcodetool`) — O-code control flow
+- `offsetTests` (`gcodetool`) — coordinate-system & tool offsets
+- `varRefTests` (`gcodetool`) — G-code variable references
+- `gcodeTests` (`gcodetool`) — units/plane/drill-cycle/incremental coverage
+- `errorTests` (`gcodetool`) — error-path regressions (divide-by-zero, bad drill L, recursion …)
+- `tplTests` (`tplang`) — TPL/JavaScript
+- `plannerTests` (`planner`) — motion planning (JSON plan output)
+- `simTests` (`camsim`) — end-to-end simulation via stable STL metrics (see `tests/README.md`)
+- `pythonTests` (`camotics.so`) — Python-binding refcount regression
+
+Binaries must be built (`scons`) before running tests, since the harness invokes them by
+relative path. `simTests` and `pythonTests` use small wrapper scripts (`run-sim`, `run-py`);
+see `tests/README.md` for how to add simulation tests. **Always `--threads=1` for `camsim`
+tests** — multi-threaded marching-cubes output is not bit-stable.
+
+### Code coverage
+
+```bash
+scons coverage=1 with_gui=0 gcodetool planner camsim tplang   # instrumented build
+cd tests && ./testHarness                                     # generate *.gcda
+gcov --json-format --stdout build/gcode/interp/Evaluator.gcda # evaluate per file
+```
+
+Disable instrumentation again with a normal `scons` rebuild (and delete `build/**/*.gcda`,
+`*.gcno`). Coverage instruments only CAMotics objects, not the cbang dependency.
 
 ## Architecture
 

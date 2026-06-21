@@ -26,9 +26,6 @@
 
 namespace CAMotics {
   class Workpiece : public cb::Rectangle3D, public FieldFunction {
-    cb::Vector3D center;
-    cb::Vector3D halfDim2;
-
   public:
     Workpiece(const cb::Rectangle3D &r = cb::Rectangle3D());
 

@@ -25,11 +25,7 @@ using namespace cb;
 using namespace CAMotics;
 
 
-Workpiece::Workpiece(const Rectangle3D &r) :
-  Rectangle3D(r), center(r.getCenter()) {
-  Vector3D halfDim = r.getDimensions() / 2;
-  halfDim2 = halfDim * halfDim;
-}
+Workpiece::Workpiece(const Rectangle3D &r) : Rectangle3D(r) {}
 
 
 double Workpiece::depth(const Vector3D &p) const {

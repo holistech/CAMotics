@@ -22,6 +22,7 @@ env.CBAddVariables(
     BoolVariable('with_tpl', 'Enable TPL', True),
     BoolVariable('with_gui', 'Enable graphical user interface', True),
     BoolVariable('wrap_glibc', 'Enable GlibC function wrapping', False),
+    BoolVariable('coverage', 'Enable gcov code coverage instrumentation', False),
     EnumVariable('cxxstd', 'Set C++ language standard', 'c++17',
       allowed_values = ('c++14', 'c++17', 'c++20')),
     )
@@ -69,6 +70,14 @@ if not env.GetOption('clean'):
 
     if env['compiler_mode'] == 'gnu':
         env.AppendUnique(CXXFLAGS = ['-Wno-deprecated-declarations'])
+
+    # Code coverage (gcov): build with `scons coverage=1`, run the test suite,
+    # then evaluate the generated *.gcda files with gcov.  Disables optimization
+    # so line counts map cleanly to source.
+    if env.get('coverage'):
+        for flag in ['--coverage', '-O0', '-g']:
+            env.AppendUnique(CXXFLAGS = [flag], CFLAGS = [flag])
+        env.AppendUnique(LINKFLAGS = ['--coverage'])
 
     conf.CBConfig('cbang')
     env.CBDefine('USING_CBANG') # Using CBANG macro namespace

@@ -4,6 +4,13 @@
 **Umfang:** Gesamter eigener Quellcode (`src/`, ~46.800 LOC ohne gebündelte Fremdbibliotheken clipper/dxflib/cairo)
 **Methodik:** Modulweiser Review (G-code-Engine, Simulation/Rendering, GUI, Sprach-Bindings/IO) plus strukturelle Testabdeckungs-Analyse. Build und Testsuite wurden zuvor erfolgreich ausgeführt (25/25 Tests grün).
 
+> **Umsetzungsstatus (Branch `test-suite`):** Die Befunde wurden in 6 Projekten abgearbeitet
+> — siehe [`docs/improvement/STATUS.md`](docs/improvement/STATUS.md). Beide KRITISCH- und alle
+> HOCH-Befunde sind behoben; die Testsuite ist von 25 auf **45** gewachsen (neue Suiten für
+> Simulation, Planner, Fehlerpfade, Python-Bindings). Einige MITTEL/NIEDRIG-Befunde wurden nach
+> Verifikation bewusst **nicht** gepatcht (Fehlbefund, Regressionsrisiko oder Design-/UX-Entscheidung)
+> — jeweils in STATUS.md begründet. Gemessene Zeilen-Coverage des getesteten (Nicht-GUI-)Codes: **40,3 %**.
+
 ---
 
 ## 1. Management Summary
