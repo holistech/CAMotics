@@ -21,11 +21,17 @@
 #pragma once
 
 
+// Only set the error if Python doesn't already have one pending: a C++
+// exception originating from a failed Python call already carries the more
+// precise original exception, which we must not overwrite.
 #define CATCH_PYTHON                                            \
   catch (const cb::Exception &e) {                              \
-    PyErr_SetString(PyExc_RuntimeError, SSTR(e).c_str());       \
+    if (!PyErr_Occurred())                                      \
+      PyErr_SetString(PyExc_RuntimeError, SSTR(e).c_str());     \
   } catch (const std::exception &e) {                           \
-    PyErr_SetString(PyExc_RuntimeError, e.what());              \
+    if (!PyErr_Occurred())                                      \
+      PyErr_SetString(PyExc_RuntimeError, e.what());            \
   } catch (...) {                                               \
-    PyErr_SetString(PyExc_RuntimeError, "Unknown exception");   \
+    if (!PyErr_Occurred())                                      \
+      PyErr_SetString(PyExc_RuntimeError, "Unknown exception"); \
   }

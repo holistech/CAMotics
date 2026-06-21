@@ -205,6 +205,9 @@ double Opt::round(double T, unsigned iterations, AnnealState &current,
                   AnnealState &best) {
   double average = 0;
 
+  // Nothing to reorder with fewer than two points; avoids rand() % 0 below.
+  if (best.index.size() < 2) return average;
+
   for (unsigned round = 0; round < iterations && !shouldQuit(); round++) {
     unsigned first = rand() % best.index.size();
     unsigned second = rand() % best.index.size();

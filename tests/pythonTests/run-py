@@ -1,0 +1,8 @@
+#!/bin/bash
+# Fuehrt ein Python-Testskript gegen das gebaute camotics.so-Modul aus.
+# Setzt PYTHONPATH auf das build-Verzeichnis. Bei Crash (Refcount-Underflow)
+# schlaegt der Test ueber den Exit-Code fehl.
+set -u
+here="$(cd "$(dirname "$0")" && pwd)"
+export PYTHONPATH="$here/../../build"
+exec python3 "$1"

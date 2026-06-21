@@ -31,7 +31,7 @@ namespace {
     string result;
 
     for (unsigned i = 0; i < filename.size(); i++)
-      if (filename[i] == '%' && i < filename.size() - 2) {
+      if (filename[i] == '%' && i + 2 < filename.size()) {
         result += (char)String::parseU8("0x" + filename.substr(i + 1, 2));
         i += 2;
 
@@ -74,6 +74,9 @@ void XMLHandler::startElement(const string &name,
       else number = tools;
 
       sink.insertDict(String(number));
+
+      // Mark the active tool so text() picks up the element's description text.
+      currentTool = (int)number;
 
       if (attrs.has("units")) sink.insert("units", attrs["units"]);
       if (attrs.has("shape")) sink.insert("shape", attrs["shape"]);

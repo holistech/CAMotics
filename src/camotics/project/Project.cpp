@@ -107,7 +107,14 @@ void Project::setResolutionMode(CAMotics::ResolutionMode x) {
 
 
 double Project::getResolution() const {
-  if (resolutionMode == ResolutionMode::RESOLUTION_MANUAL) return resolution;
+  if (resolutionMode == ResolutionMode::RESOLUTION_MANUAL) {
+    // Guard against a non-positive manual resolution (e.g. from a malicious or
+    // corrupt project): it would divide by zero or allocate an enormous voxel
+    // grid in the simulation.
+    if (resolution <= 0)
+      THROW("Manual resolution must be positive, got " << resolution);
+    return resolution;
+  }
   return computeResolution(resolutionMode, workpiece.getBounds());
 }
 

@@ -1,0 +1,4 @@
+{
+  "command": "%(suite-dir)s/run-py %(data-dir)s/test.py",
+  "timeout": 120
+}

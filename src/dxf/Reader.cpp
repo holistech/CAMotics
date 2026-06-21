@@ -90,6 +90,7 @@ void Reader::addPolyline(const DL_PolylineData &polyline) {
 
 
 void Reader::addVertex(const DL_VertexData &vertex) {
+  if (entity.isNull()) THROW("DXF vertex without an active polyline entity");
   if (vertex.bulge) LOG_WARNING("Cannot handle vertex with bulge");
   entity->addVertex(cb::Vector3D(vertex.x, vertex.y, vertex.z));
 }
@@ -102,11 +103,13 @@ void Reader::addSpline(const DL_SplineData &spline) {
 
 
 void Reader::addControlPoint(const DL_ControlPointData &ctrlPt) {
+  if (entity.isNull()) THROW("DXF control point without an active spline entity");
   entity->addVertex(cb::Vector3D(ctrlPt.x, ctrlPt.y, ctrlPt.z));
 }
 
 
 void Reader::addKnot(const DL_KnotData &knot) {
+  if (entity.isNull()) THROW("DXF knot without an active spline entity");
   entity->addKnot(knot.k);
 }
 

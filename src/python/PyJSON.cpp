@@ -44,11 +44,12 @@ SmartPointer<JSON::Value> PyJSON::toJSON() const {
 
     Py_ssize_t size = PySequence_Size(items);
     for (Py_ssize_t i = 0; i < size; i++) {
-      PyObject *item = PySequence_GetItem(items, i);
-      PyObject *key = PyTuple_GetItem(item, 0);
-      PyObject *value = PyTuple_GetItem(item, 1);
+      PyObject *item = PySequence_GetItem(items, i); // New reference
+      PyObject *key = PyTuple_GetItem(item, 0);      // Borrowed
+      PyObject *value = PyTuple_GetItem(item, 1);    // Borrowed
 
       dict->insert(PyUnicode_ToStdString(key), PyJSON(value).toJSON());
+      Py_DECREF(item); // Release the reference from PySequence_GetItem
     }
 
     Py_DECREF(items);
@@ -59,8 +60,11 @@ SmartPointer<JSON::Value> PyJSON::toJSON() const {
     SmartPointer<JSON::Value> list = new JSON::List;
 
     Py_ssize_t size = PySequence_Size(o);
-    for (Py_ssize_t i = 0; i < size; i++)
-      list->append(PyJSON(PySequence_GetItem(o, i)).toJSON());
+    for (Py_ssize_t i = 0; i < size; i++) {
+      PyObject *item = PySequence_GetItem(o, i); // New reference
+      list->append(PyJSON(item).toJSON());
+      Py_XDECREF(item);
+    }
 
     return list;
   }
@@ -74,11 +78,19 @@ SmartPointer<JSON::Value> PyJSON::toJSON() const {
 
   // Try to convert to string
   PyObject *str = PyObject_Str(o);
-  if (str) return new JSON::String(PyUnicode_ToStdString(str));
+  if (str) {
+    SmartPointer<JSON::Value> s = new JSON::String(PyUnicode_ToStdString(str));
+    Py_DECREF(str);
+    return s;
+  }
 
   // Get ASCII representation
   PyObject *repr = PyObject_ASCII(o);
-  if (repr) return new JSON::String(PyUnicode_ToStdString(repr));
+  if (repr) {
+    SmartPointer<JSON::Value> s = new JSON::String(PyUnicode_ToStdString(repr));
+    Py_DECREF(repr);
+    return s;
+  }
 
   return JSON::Null::instancePtr();
 }

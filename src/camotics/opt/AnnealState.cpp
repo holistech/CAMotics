@@ -72,7 +72,9 @@ double AnnealState::computeCost(unsigned first, unsigned second) const {
 double AnnealState::computeCost() const {
   double cost = 0;
 
-  for (unsigned i = 0; i < index.size() - 1; i++)
+  // i + 1 < size avoids the unsigned underflow of (size() - 1) when index is
+  // empty (which would loop ~UINT_MAX times reading out of bounds).
+  for (unsigned i = 0; i + 1 < index.size(); i++)
     cost += computeCost(i, i + 1);
 
   return cost;

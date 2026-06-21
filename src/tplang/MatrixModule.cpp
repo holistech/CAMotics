@@ -106,10 +106,13 @@ void MatrixModule::getMatrixCB(const js::Value &args, js::Sink &sink) {
 MatrixModule::axes_t MatrixModule::parseAxes(const js::Value &args) {
   if (!args.has("matrix")) return XYZ;
 
-  axes_t matrix = (axes_t)args.getInteger("matrix");
-  if (AXES_COUNT <= matrix) THROW("Invalid matrix number " << matrix);
+  // Read as int and bounds-check before casting: a negative value would pass
+  // an unsigned-only "AXES_COUNT <= matrix" check and index out of range.
+  int matrix = args.getInteger("matrix");
+  if (matrix < 0 || AXES_COUNT <= matrix)
+    THROW("Invalid matrix number " << matrix);
 
-  return matrix;
+  return (axes_t)matrix;
 }
 
 

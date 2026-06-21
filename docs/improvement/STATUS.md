@@ -15,7 +15,7 @@ und den Aufbau einer vollständigen Testsuite.
 | [P1](P1-test-infrastructure.md) | Test-Infrastruktur & Simulations-Harness | ✅ abgeschlossen | — | 6 | ✅ | ✅ 31/31 |
 | [P2](P2-gcode-engine.md) | G-code-Engine: Fixes + Tests | ✅ abgeschlossen | 10 fix / 4 bewertet | 11 | ✅ | ✅ 42/42 |
 | [P3](P3-simulation.md) | Simulation/Contour/Render: Fixes + Tests | ✅ abgeschlossen | 7 fix / 3 bewertet / 3→P6 | 2 | ✅ | ✅ 44/44 |
-| [P4](P4-bindings-io.md) | Sprach-Bindings & IO + Security | ⬜ offen | 0/15 | 0 | — | — |
+| [P4](P4-bindings-io.md) | Sprach-Bindings & IO + Security | ✅ abgeschlossen | 12 fix / 3 bewertet | 1 | ✅ | ✅ 45/45 |
 | [P5](P5-gui.md) | GUI: Fixes | ⬜ offen | 0/14 | 0 | — | — |
 | [P6](P6-cleanup.md) | Cleanup & finale Verifikation | ⬜ offen | — | — | — | — |
 
@@ -44,6 +44,8 @@ Status-Legende: ⬜ offen · 🟡 in Arbeit · ✅ abgeschlossen · ⛔ blockier
 | 2026-06-21 | — | P1+P2 in Branch `test-suite` committet (3 Commits: docs / P1 / P2). |
 | 2026-06-21 | P3 | **7 Fixes:** K-1/S-1 (Sweep unsigned-UB, **kritisch**), S-2 (isValid invertiert), S-3 (Simulation-Member init), S-4 (Renderer threads==0 Hänger), S-5 (MC33 NaN-Guard + Cache), S-12 (Fortschritt-Underflow), S-13 (camsim bounds-Reihenfolge). **2 Tests** neu (SmallToolTest=K-1-Regression, ThreadsZeroTest=S-4). Suite: 42 → **44 grün**. |
 | 2026-06-21 | P3 | **K-1 präzisiert:** Symptom ist UB-bedingt plattformabhängig (x86/gcc: falsche Facettenzahl statt Totalausfall) — durch Gegentest belegt (buggy 3356 ≠ fixed 3740). |
+| 2026-06-21 | P4 | **12 Fixes:** K-2/L-1 (PyPtr Copy/Move-Ctor, **kritisch**), L-2 (PyJSON 4 Referenzlecks), L-3 (Runner-Thread vor Aktiv-Prüfung), L-4 (DXF Null-Checks), L-5 (STL gcount), L-6 (opt Modulo/Underflow bei 0 Cuts), L-8 (resolution>0), L-9 (decodeFilename Underflow), L-11 (MatrixModule neg. Index), L-12 (PyNameResolver INCREF-Reihenfolge), L-13 (Catch.h überschreibt Exception), L-15 (XMLHandler currentTool). **1 Test** (pythonTests/RefcountTest). Suite: 44 → **45 grün**. |
+| 2026-06-21 | P4 | **L-10 (XXE) verifiziert: kein Risiko.** cbang nutzt Expat ohne `XML_SetExternalEntityRefHandler`; `XML_SetParamEntityParsing` ist per Default `NEVER` → externe Entitäten werden nicht aufgelöst. Kein Fix nötig. |
 
 ---
 
@@ -104,6 +106,19 @@ Bekannte Nicht-Implementierung, kein versteckter Defekt.
   Korrektheitsbug. Laut Plan nur mit nachgewiesener Kennzahl-Gleichheit vorher/nachher zu
   mergen — als eigenständige, sorgfältig zu benchmarkende Aufgabe ausgelagert.
 - **S-9 / S-10 / S-11 (toter Code, const-Korrektheit): → P6** (Cleanup-Projekt).
+
+## P4 — Abschlussnotizen (differenziert bewertete Befunde)
+
+- **L-7 (Pfad-Sandbox für `.camotics`-Projekte): bewusst keine harte Sandbox.** Ein Projekt
+  kann auf Dateien per absolutem/`../`-Pfad verweisen und TPL (beliebiges JS) laden. Eine
+  harte Ablehnung würde legitime Workflows mit absoluten Pfaden brechen. Das ist eine
+  **Vertrauensgrenze-Entscheidung** des Projektbesitzers: Ein `.camotics`-Projekt ist wie
+  ausführbarer Code zu behandeln (Öffnen = Vertrauen wie bei einem Makro-Dokument). Dies ist
+  zu dokumentieren (README/UI-Hinweis), nicht durch einen riskanten Pfad-Filter zu erzwingen.
+- **L-10 (XXE): kein Risiko (verifiziert).** Siehe Log — Expat ohne externen Entity-Handler.
+- **L-14 (ClipperModule Integer-Überlauf): NIEDRIG, belassen.** Betrifft nur absurd große
+  Koordinaten in **nutzergeschriebenen** TPL-Skripten (kein untrusted Input); ein Clamp
+  hätte geringen Nutzen und könnte legitime Extremgeometrie verändern.
 
 ## Offene Blocker / Entscheidungen
 

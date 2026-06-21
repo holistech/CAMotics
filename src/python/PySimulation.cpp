@@ -348,6 +348,9 @@ namespace {
       GCode::PlannerConfig planConfig;
       if (config) planConfig.read(*PyJSON(config).toJSON());
 
+      // Check before constructing Runner: its constructor starts the thread, so
+      // throwing from set_task() afterwards would orphan a running thread.
+      if (self->s->task.isSet()) THROW("A task is already active");
       set_task(self, new Runner(self, gcode ? gcode : "", tpl ? tpl : "",
                                 config ? &planConfig : 0));
 
@@ -476,6 +479,9 @@ namespace {
         }
       };
 
+      // Check before constructing Runner: its constructor starts the thread, so
+      // throwing from set_task() afterwards would orphan a running thread.
+      if (self->s->task.isSet()) THROW("A task is already active");
       set_task(self, new Runner(self, args, kwds));
 
       Py_RETURN_NONE;

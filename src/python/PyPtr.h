@@ -28,6 +28,15 @@ class PyPtr {
 
 public:
   PyPtr(PyObject *ptr = 0) : ptr(ptr) {if (ptr) Py_INCREF(ptr);}
+
+  // Copy constructor is required (rule of three): the implicitly generated one
+  // would copy ptr without Py_INCREF, leading to a double Py_DECREF / refcount
+  // underflow when both objects are destroyed.
+  PyPtr(const PyPtr &o) : ptr(o.ptr) {if (ptr) Py_INCREF(ptr);}
+
+  // Move constructor: steal the reference, no refcount change needed.
+  PyPtr(PyPtr &&o) noexcept : ptr(o.ptr) {o.ptr = 0;}
+
   ~PyPtr() {if (ptr) Py_DECREF(ptr);}
 
 
@@ -37,6 +46,7 @@ public:
 
 
   PyPtr &operator=(const PyPtr &o) {
+    if (this == &o) return *this;
     if (ptr) Py_DECREF(ptr);
     ptr = o.ptr;
     if (ptr) Py_INCREF(ptr);

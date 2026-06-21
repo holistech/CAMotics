@@ -66,6 +66,7 @@ uint32_t Reader::readHeader(string &name, string &hash) {
 
     // Count
     stream.read((char *)&count, 4);
+    if (stream.gcount() != 4) count = 0; // Truncated header
   }
 
   return count;
@@ -83,6 +84,8 @@ void Reader::readFacet(Vector3F &v1, Vector3F &v2, Vector3F &v3,
   if (binary) {
     BinaryTriangle tri;
     stream.read((char *)&tri, 50);
+    if (stream.gcount() != 50)
+      THROW("Truncated binary STL: incomplete facet record");
 
     v1 = tri.v1;
     v2 = tri.v2;

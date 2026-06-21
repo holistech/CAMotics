@@ -25,8 +25,10 @@ using namespace std;
 
 
 PyNameResolver::PyNameResolver(PyObject *cb) : cb(cb) {
-  Py_INCREF(cb);
+  // Check before INCREF: throwing here skips the destructor, so an INCREF
+  // before the check would leak a reference.
   if (!PyCallable_Check(cb)) THROW("get() object not callable");
+  Py_INCREF(cb);
 }
 
 
