@@ -78,7 +78,7 @@ void LinePlanner::reset() {
 
 void LinePlanner::setConfig(const PlannerConfig &config) {
   this->config = config;
-  nextID &= (1U << config.idBits) - 1;
+  nextID &= (1ULL << config.idBits) - 1;
 }
 
 
@@ -327,8 +327,9 @@ void LinePlanner::move(const Axes &target, int axes, bool rapid, double time) {
 
   // Null or short move
   if (lc->length < config.minTravel) {
-    if (lc->seeking) THROW("Seeking move too short");
-    delete lc;
+    bool seekTooShort = lc->seeking;
+    delete lc; // Free before throwing to avoid leaking the command
+    if (seekTooShort) THROW("Seeking move too short");
     return;
   }
 
@@ -378,14 +379,14 @@ void LinePlanner::message(const string &s) {
 
 uint64_t LinePlanner::getNextID() {
   uint64_t id = nextID;
-  nextID = (nextID + 1) & ((1U << config.idBits) - 1);
+  nextID = (nextID + 1) & ((1ULL << config.idBits) - 1);
   return id;
 }
 
 
 bool LinePlanner::idLess(uint64_t a, uint64_t b) const {
   // Compare IDs with wrap around
-  return (1U << (config.idBits - 1)) < ((a - b) & ((1U << config.idBits) - 1));
+  return (1ULL << (config.idBits - 1)) < ((a - b) & ((1ULL << config.idBits) - 1));
 }
 
 
@@ -446,7 +447,7 @@ bool LinePlanner::merge(LineCommand *next, LineCommand *prev,
 
   // Delete new line and intervening commands from pre-plan queue
   delete next;
-  while (pre.back() != prev) delete pre.pop_back();
+  while (!pre.empty() && pre.back() != prev) delete pre.pop_back();
 
   // Check if newly merged move is too short
   if (prev->length < config.minTravel) {
@@ -559,7 +560,7 @@ void LinePlanner::blend(LineCommand *next, LineCommand *prev,
   if (!segments) return;
 
   // Delete intervening commands from pre-plan queue
-  while (pre.back() != prev) delete pre.pop_back();
+  while (!pre.empty() && pre.back() != prev) delete pre.pop_back();
 
   // Get intersection point before making cut
   Vector3D p = next->start.getXYZ();

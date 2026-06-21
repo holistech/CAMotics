@@ -183,7 +183,7 @@ void LineCommand::write(MachineInterface &machine) const {
 
     // Approximate move time
     double delta = (s.offset - offset) / length * time;
-    offset += s.offset;
+    offset = s.offset; // Absolute offset of this speed point, not cumulative
 
     machine.move(start + unit * s.offset, axes, rapid, delta);
     machine.setSpeed(s.speed);

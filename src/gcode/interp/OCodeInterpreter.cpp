@@ -72,8 +72,11 @@ void OCodeInterpreter::upScope() {
 
 
 void OCodeInterpreter::downScope() {
+  // Hard limit: deep or infinite recursion would otherwise overflow the stack
+  // and crash the process.
+  if (100 < stack.size())
+    THROW("Exceeded maximum subroutine recursion depth of 100");
   stack.push_back(StackEntry());
-  if (stack.size() == 101) LOG_WARNING("exceeded recursion depth 100");
   controller.pushScope();
 }
 

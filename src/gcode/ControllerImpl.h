@@ -158,7 +158,10 @@ namespace GCode {
 
     // Tool
     Tool &getTool(unsigned tool) {return tools.get(tool);}
-    unsigned getCurrentTool() const {return (unsigned)get(TOOL_NUMBER);}
+    // NOTE: TOOL_NUMBER is initialized to -1 (no tool selected), so the return
+    // type must be signed for the "< 0" guards at the call sites to work.  With
+    // an unsigned cast the sentinel became a huge value and the guards were dead.
+    int getCurrentTool() const {return (int)get(TOOL_NUMBER);}
     void setTools(int vars, bool relative, bool cs9);
     void toolChange();
     void loadToolOffsets(unsigned tool, bool add);

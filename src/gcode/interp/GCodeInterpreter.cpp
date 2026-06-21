@@ -84,7 +84,7 @@ void GCodeInterpreter::specialComment(const string text) {
 
   // TODO handle PROBE*
   // See http://linuxcnc.org/docs/html/gcode/overview.html#gcode:comments
-  if (code == "probeopen" && isspace(*it))
+  if (code == "probeopen" && (it == end || isspace(*it)))
     LOG_WARNING("PROBEOPEN not supported");
 
   // Skip space
@@ -304,7 +304,7 @@ void GCodeInterpreter::operator()(const SmartPointer<Block> &block) {
     // Implicit motion
     const Code *activeMotion =
       Codes::find('G', controller.getCurrentMotionMode() / 10.0);
-    if (implicitMotion && (vars & VT_AXIS) &&
+    if (implicitMotion && (vars & VT_AXIS) && activeMotion &&
         activeMotion->priority < priority) {
       SmartPointer<Word> implicitWord = new Word(activeMotion);
       implicitWord->getLocation() = block->getLocation();

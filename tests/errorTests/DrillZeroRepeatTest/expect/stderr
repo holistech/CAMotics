@@ -1,0 +1,4 @@
+[91mERROR:Drill cycle repeat count L=0 must be >= 1[0m
+[91mERROR:While executing GCode block:G81 X5 Y5 Z-4 R2 L0 F100[0m
+[91mERROR:       At: :3[0m
+[91mERROR:Caused by: Drill cycle repeat count L=0 must be >= 1[0m

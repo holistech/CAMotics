@@ -55,10 +55,8 @@ double Evaluator::eval(BinaryOp &e) {
   double right = e.getRight()->eval(*this);
 
   if (right == 0 &&
-      (e.getType() == Operator::DIV_OP || e.getType() == Operator::MOD_OP)) {
-    LOG_ERROR(e.getLocation() << ": Divide by zero");
-    return 0;
-  }
+      (e.getType() == Operator::DIV_OP || e.getType() == Operator::MOD_OP))
+    THROW(e.getLocation() << ": Divide by zero");
 
   // NOTE, LinuxCNC handles floating-point equality differently.
   //   See ``Equality and floating-point values``.
@@ -98,16 +96,36 @@ double Evaluator::eval(FunctionCall &e) {
 
   if (e.getArg2().isNull()) {
     if (name == "ABS")   return fabs(arg1);
-    if (name == "ACOS")  return acos(arg1) * 180.0 / Math::PI;
-    if (name == "ASIN")  return asin(arg1) * 180.0 / Math::PI;
+    if (name == "ACOS") {
+      if (arg1 < -1 || 1 < arg1)
+        THROW(e.getLocation() << ": ACOS argument " << arg1
+              << " out of domain [-1, 1]");
+      return acos(arg1) * 180.0 / Math::PI;
+    }
+    if (name == "ASIN") {
+      if (arg1 < -1 || 1 < arg1)
+        THROW(e.getLocation() << ": ASIN argument " << arg1
+              << " out of domain [-1, 1]");
+      return asin(arg1) * 180.0 / Math::PI;
+    }
     if (name == "COS")   return cos(arg1 * Math::PI / 180.0);
     if (name == "EXP")   return exp(arg1);
     if (name == "FIX")   return floor(arg1);
     if (name == "FUP")   return ceil(arg1);
     if (name == "ROUND") return round(arg1);
-    if (name == "LN")    return log(arg1);
+    if (name == "LN") {
+      if (arg1 <= 0)
+        THROW(e.getLocation() << ": LN argument " << arg1
+              << " must be positive");
+      return log(arg1);
+    }
     if (name == "SIN")   return sin(arg1 * Math::PI / 180.0);
-    if (name == "SQRT")  return sqrt(arg1);
+    if (name == "SQRT") {
+      if (arg1 < 0)
+        THROW(e.getLocation() << ": SQRT argument " << arg1
+              << " must be non-negative");
+      return sqrt(arg1);
+    }
     if (name == "TAN")   return tan(arg1 * Math::PI / 180.0);
 
   } else {

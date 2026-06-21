@@ -368,6 +368,15 @@ void ControllerImpl::arc(int vars, bool clockwise) {
       return;
     }
 
+    // Coincident start and end points cannot define a radius format arc: the
+    // center would be ambiguous and E.normalize() below would produce NaN.
+    if (a < 0.00001) {
+      LOG_WARNING("Radius format arc with coincident start and end points, "
+                  "replacing with line segment");
+      move(target, vars, false);
+      return;
+    }
+
     // Compute arc center
     Vector2D m((start + finish) / 2);
     Vector2D E(start.y() - finish.y(), finish.x() - start.x());
@@ -500,7 +509,15 @@ void ControllerImpl::drill(int vars, bool dwell, bool feedOut,
   unsigned xyVars = vars & (plane.getXVarType() | plane.getYVarType());
   unsigned zVar = plane.getZVarType();
   double r = getVar('R');
-  unsigned L = (vars & VT_L) ? (unsigned)getVar('L') : 1;
+
+  // L is the optional repeat count.  Read as signed and validate: a negative
+  // value cast to unsigned would loop billions of times (effective hang), and
+  // L=0 would silently drill nothing.
+  int L = 1;
+  if (vars & VT_L) {
+    L = (int)getVar('L');
+    if (L < 1) THROW("Drill cycle repeat count L=" << L << " must be >= 1");
+  }
 
   double zClear = 0;
   switch (state.returnMode) {
@@ -512,7 +529,7 @@ void ControllerImpl::drill(int vars, bool dwell, bool feedOut,
   }
   }
 
-  for (unsigned i = 0; i < L; i++) {
+  for (int i = 0; i < L; i++) {
     // Z is below R
     double z = getAxisPosition(plane.getZAxis());
     if (!i && z < r) moveAxis(plane.getZAxis(), r, true);

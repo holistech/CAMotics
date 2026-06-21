@@ -1,0 +1,4 @@
+[91mERROR:Exceeded maximum subroutine recursion depth of 100[0m
+[91mERROR:While executing GCode block:O100 call[0m
+[91mERROR:       At: :2[0m
+[91mERROR:Caused by: Exceeded maximum subroutine recursion depth of 100[0m

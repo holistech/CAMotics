@@ -1,0 +1,5 @@
+o100 sub
+  o100 call
+o100 endsub
+o100 call
+M2

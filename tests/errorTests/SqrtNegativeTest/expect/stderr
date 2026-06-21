@@ -1,0 +1,4 @@
+[91mERROR::1:10: SQRT argument -1 must be non-negative[0m
+[91mERROR:While executing GCode block:#1 = [SQRT[[-1]]][0m
+[91mERROR:       At: :1[0m
+[91mERROR:Caused by: :1:10: SQRT argument -1 must be non-negative[0m
