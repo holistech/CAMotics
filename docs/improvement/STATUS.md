@@ -19,6 +19,7 @@ und den Aufbau einer vollständigen Testsuite.
 | [P5](P5-gui.md) | GUI: Fixes | ✅ abgeschlossen | 6 fix / 8 bewertet→P6 | 0 | ✅ | ✅ 45/45 |
 | [P6](P6-cleanup.md) | Cleanup & finale Verifikation | ✅ abgeschlossen | toter Code + Coverage | — | ✅ | ✅ 45/45 |
 | P7 | Testabdeckung erweitern (Nachtrag) | ✅ abgeschlossen | — | 8 | ✅ | ✅ 53/53 |
+| P8 | Signal-Handler-Fix → saubere Beendigung + GUI-Coverage | ✅ abgeschlossen | 1 (sauberer Shutdown) | — | ✅ | ✅ 53/53 |
 
 Status-Legende: ⬜ offen · 🟡 in Arbeit · ✅ abgeschlossen · ⛔ blockiert
 
@@ -53,6 +54,7 @@ Status-Legende: ⬜ offen · 🟡 in Arbeit · ✅ abgeschlossen · ⛔ blockier
 | 2026-06-21 | P6 | **Toter Code entfernt:** `sim/OctTree.{cpp,h}` (S-9, nirgends instanziiert), ungenutzte `Workpiece`-Member `center`/`halfDim2` (S-11). **gcov-Coverage-Option** zu SConstruct hinzugefügt (`coverage=1`). **Echte Coverage gemessen.** CLAUDE.md (Test-Suiten + Coverage) und CODE_REVIEW.md (Umsetzungsstatus) aktualisiert. 45 Tests grün. |
 | 2026-06-21 | P7 | **Testabdeckung erweitert (reine Test-Additionen, kein `src/`-Code geändert):** 3 Werkzeugform-Tests (conical/spheroid/snubnose → ConicSweep/SpheroidSweep/CompositeSweep), 2 `planner --gcode` (GCodeMachine), 2 `gcodetool --json-out` (JSONMachine), 1 **GUI-Pipeline-Smoke-Test** (camotics headless via Xvfb). Suite: 45 → **53 grün**. CLI-Coverage 40,3 % → **42,2 %** (gcode/machine 30→37 %, planner 73→80 %). |
 | 2026-06-21 | P7 | **GUI-Coverage-Limitation festgestellt:** SIGTERM terminiert camotics vor dem gcov-Dump (getrennte Qt-/cbang-Event-Loops) → GUI-Module erscheinen nicht in gcov. Der GUI-Test bleibt als Pipeline-Crash-Schutz wertvoll. Dokumentiert in `tests/README.md`. |
+| 2026-06-21 | P8 | **Signal-Handler-Fix (Limitation behoben):** `QtApp` aktiviert `FEATURE_SIGNAL_HANDLER` (GUI-only) und pollt cbang's `quit`-Flag in `run()` per QTimer → `qApp.quit()`. SIGTERM/SIGINT beenden camotics jetzt **sauber** (Exit 0 statt 143; speichert State, gibt GL-Ressourcen frei). **Signal-safe:** Handler setzt nur ein bool; der Qt-Aufruf erfolgt im Qt-Thread, nicht im Signal-Kontext. CLI-Tools unverändert (Feature GUI-only). **GUI-Coverage jetzt messbar:** `view` 59 %, `value` 72 %, `qt` 28 %, `machine` 43 %. GUI-Test verschärft auf „sauberer Exit" → verriegelt den Shutdown. |
 
 ---
 
@@ -169,8 +171,12 @@ GUI-Code (`qt/`, `view/`, `value/`) ist nicht instrumentiert (nicht automatisier
 
 Treiber-Binaries: `gcodetool` 90,5 %, `planner` 80,0 %, `camsim` 75,8 %, `tplang` 60,0 %.
 Nach P7: `gcode/machine` 36,6 % (beide Senken JSONMachine + GCodeMachine getestet).
-**GUI-Module** sind nicht in gcov erfasst — der `guiTests`-Smoke-Test fährt die Pipeline
-durch (Crash-Schutz), aber camotics wird per Signal terminiert, bevor gcov schreibt.
+
+**GUI-Module (nach P8 erfasst):** `view` 59,0 %, `value` 71,7 %, `qt` 28,5 %,
+`machine` 42,7 % — der GUI-Smoke-Test deckt sie ab, seit camotics sauber auf SIGTERM
+herunterfährt (gcov schreibt erst beim regulären Exit). Gesamt **inkl. GUI: 40,3 % von
+15452 Zeilen** — der GUI-Code bringt ~6300 zuvor ungetestete Zeilen in den Nenner, daher
+gleicher Prozentwert bei deutlich mehr real abgedecktem Code (6233 statt 3859 Zeilen).
 
 **Vorher → Nachher:** 25 → 45 Tests; 2 → 5 getriebene Binaries; G/M-Code-Abdeckung von ~5 %
 deutlich erhöht; `sim`/`contour`/`render` von praktisch 0 % auf messbare Abdeckung; Python-

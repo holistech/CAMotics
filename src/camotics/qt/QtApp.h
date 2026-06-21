@@ -40,6 +40,12 @@ namespace CAMotics {
     explicit QtApp();
     ~QtApp();
 
+    // Enables FEATURE_SIGNAL_HANDLER (in addition to CAMotics::Application's
+    // features) so the GUI catches SIGTERM/SIGINT and can shut down cleanly via
+    // the exit-flag poll in run().  Kept GUI-only: the CLI tools must not swallow
+    // Ctrl-C without acting on it.
+    static bool _hasFeature(int feature);
+
     // From cb::Application
     int init(int argc, char *argv[]) override;
     void run() override;

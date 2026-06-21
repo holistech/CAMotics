@@ -28,6 +28,7 @@
 #include <cbang/os/SystemInfo.h>
 
 #include <QTranslator>
+#include <QTimer>
 
 #include <vector>
 
@@ -36,9 +37,15 @@ using namespace cb;
 using namespace CAMotics;
 
 
+bool QtApp::_hasFeature(int feature) {
+  if (feature == FEATURE_SIGNAL_HANDLER) return true;
+  return CAMotics::Application::_hasFeature(feature);
+}
+
+
 QtApp::QtApp() :
   // NOTE MSVC requires the explicit _hasFeature reference
-  CAMotics::Application("CAMotics", CAMotics::Application::_hasFeature),
+  CAMotics::Application("CAMotics", QtApp::_hasFeature),
   threads(SystemInfo::instance().getCPUCount()) {
   options.add("qt-style", "Set Qt style");
   options.add("fullscreen", "Start in fullscreen mode.")->setDefault(false);
@@ -125,6 +132,19 @@ void QtApp::run() {
     qtWin.setAutoPlay();
     if (options["auto-close"].toBoolean()) qtWin.setAutoClose();
   }
+
+  // Bridge cbang's exit request to the Qt event loop.  The signal handler
+  // (SIGTERM/SIGINT) only sets cbang's `quit` flag, which is all that is safe to
+  // do from async-signal context.  This timer runs in the Qt main thread and
+  // polls that flag, then quits the event loop cleanly -- so the app shuts down
+  // properly (saving state, releasing GL resources) instead of being killed by
+  // the default signal disposition.  Polling avoids calling Qt from the signal
+  // handler, which would not be async-signal-safe.
+  QTimer exitTimer;
+  QObject::connect(&exitTimer, &QTimer::timeout, &qtApp, [this, &qtApp] {
+    if (shouldQuit()) qtApp.quit();
+  });
+  exitTimer.start(200);
 
   // Start it up
   qtWin.show();

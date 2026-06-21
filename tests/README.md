@@ -70,14 +70,14 @@ Tests überschreiben das `command` per Test-`test.json` auf `--gcode` (trifft di
 
 `run-gui <projekt.camotics>` startet `camotics` headless unter **Xvfb** (kein Fenster auf
 dem echten Display), lässt es das Projekt laden, die Oberfläche berechnen und per OpenGL
-rendern, und beendet es dann per SIGTERM. Erfolg = die App lief ohne Crash (Smoke-Test der
-gesamten GUI- + Simulations- + Render-Pipeline). Benötigt `xvfb-run`.
+rendern, und beendet es dann per SIGTERM. Erfolg = **sauberer** Exit (Code 0): camotics
+fängt SIGTERM ab (`FEATURE_SIGNAL_HANDLER`), der Poll-Timer in `QtApp::run` beendet die
+Qt-Event-Loop, und die App fährt regulär herunter (State speichern, GL-Ressourcen
+freigeben). Der Test verriegelt damit zugleich den sauberen Shutdown. Benötigt `xvfb-run`.
 
-Hinweis: Dieser Test verifiziert die Pipeline (Crash-Schutz), liefert aber **keine**
-gcov-Zeilen-Coverage für die GUI — `camotics` wird per Signal terminiert, bevor die
-gcov-atexit-Handler schreiben (Qt- und cbang-Event-Loop sind getrennt, `requestExit`
-beendet die Qt-Loop nicht). Eine echte GUI-Coverage-Messung bräuchte einen sauberen
-Exit-Pfad (z. B. SIGTERM → `qApp->quit()`), was hier bewusst nicht erzwungen wird.
+Weil camotics nun sauber herunterfährt, laufen die gcov-atexit-Handler — der GUI-Test
+liefert daher **echte Zeilen-Coverage** für die GUI-Module (gemessen u. a. `view` ~59 %,
+`value` ~72 %, `qt` ~28 %). Vgl. Coverage-Anleitung in `CLAUDE.md`.
 
 ## Code coverage
 

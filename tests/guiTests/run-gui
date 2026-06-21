@@ -2,9 +2,11 @@
 #
 # GUI-Smoke-Test: startet camotics headless (unter Xvfb), laedt ein Projekt,
 # laesst es die Oberflaeche berechnen und per OpenGL rendern, und beendet es
-# dann sauber per SIGTERM.  Erfolg = die App lief ohne Crash bis zum SIGTERM
-# (exit 143 = 128+SIGTERM, oder 0 falls sie sich selbst beendet hat).  Ein
-# Absturz (SIGSEGV=139, SIGABRT=134, ...) laesst den Test fehlschlagen.
+# dann per SIGTERM.  Erfolg = SAUBERER Exit (Code 0): camotics faengt SIGTERM
+# ab (FEATURE_SIGNAL_HANDLER), der QTimer-Poll in QtApp::run beendet die
+# Qt-Event-Loop, und die App faehrt regulaer herunter.  Damit verriegelt dieser
+# Test auch den sauberen Shutdown.  Harte Terminierung (143) oder Absturz
+# (SIGSEGV=139, SIGABRT=134) lassen den Test fehlschlagen.
 #
 # Treibt die sonst ungetesteten GUI-Module (qt/, view/, value/) plus die
 # Simulations-/Rendering-Pipeline.  Benoetigt xvfb-run.
@@ -33,10 +35,14 @@ kill -TERM "$pid" 2>/dev/null
 wait "$pid"
 ec=$?
 
-if [ "$ec" -eq 143 ] || [ "$ec" -eq 0 ]; then
+if [ "$ec" -eq 0 ]; then
   echo "OK"
   exit 0
 fi
 
-echo "GUI smoke test crashed with exit $ec" >&2
+if [ "$ec" -eq 143 ]; then
+  echo "camotics was killed by SIGTERM (not a clean shutdown), exit $ec" >&2
+else
+  echo "GUI smoke test crashed with exit $ec" >&2
+fi
 exit 1
