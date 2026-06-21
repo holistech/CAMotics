@@ -1239,7 +1239,12 @@ void QtWin::updateFiles() {
   for (unsigned i = 0; i < project->getFileCount(); i++)
     list.append(QString::fromUtf8(project->getFileRelativePath(i).c_str()));
 
-  ui->filesListView->setModel(new QStringListModel(list));
+  // setModel does not take ownership and does not delete the previous model,
+  // so replace it explicitly to avoid leaking one model per call (updateFiles
+  // runs on every project/file change).
+  QAbstractItemModel *oldModel = ui->filesListView->model();
+  ui->filesListView->setModel(new QStringListModel(list, this));
+  delete oldModel;
 }
 
 
@@ -1408,7 +1413,11 @@ void QtWin::updateToolTables() {
     list.append
       (QString().sprintf("%d: %s", it->first, it->second.getText().c_str()));
 
-  ui->toolTableListView->setModel(new QStringListModel(list));
+  // setModel does not delete the previous model; replace it explicitly to
+  // avoid leaking a model on every call (this runs from resizeEvent too).
+  QAbstractItemModel *oldModel = ui->toolTableListView->model();
+  ui->toolTableListView->setModel(new QStringListModel(list, this));
+  delete oldModel;
 }
 
 

@@ -122,7 +122,10 @@ unsigned GLProgram::getUniform(const string &name) {
 
   GLchar *n = (GLchar *)name.c_str();
   GLint loc = GLContext().glGetUniformLocation(program, n);
-  if (loc == -1) THROW("GL uniform '" << name << "' not found");
+  // A uniform optimized out by the GLSL compiler returns -1.  Tolerate it
+  // (glUniform ignores location -1) and cache the result so we warn only once,
+  // rather than throwing and aborting the entire draw.
+  if (loc == -1) LOG_WARNING("GL uniform '" << name << "' not found");
 
   return uniforms[name] = (unsigned)loc;
 }

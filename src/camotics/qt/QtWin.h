@@ -108,6 +108,10 @@ namespace CAMotics {
     QTranslator qtTran;
     QTranslator tran;
 
+    // IMPORTANT: valueSet must be declared before view -- View is constructed
+    // with a reference to valueSet (view(new View(valueSet))) and holds it for
+    // its lifetime, so valueSet must outlive view (members are destroyed in
+    // reverse declaration order).  Do not reorder these.
     ValueSet valueSet;
     cb::SmartPointer<Project::Project> project;
     cb::SmartPointer<SimulationRun> simRun;

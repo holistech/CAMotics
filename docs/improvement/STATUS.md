@@ -16,7 +16,7 @@ und den Aufbau einer vollständigen Testsuite.
 | [P2](P2-gcode-engine.md) | G-code-Engine: Fixes + Tests | ✅ abgeschlossen | 10 fix / 4 bewertet | 11 | ✅ | ✅ 42/42 |
 | [P3](P3-simulation.md) | Simulation/Contour/Render: Fixes + Tests | ✅ abgeschlossen | 7 fix / 3 bewertet / 3→P6 | 2 | ✅ | ✅ 44/44 |
 | [P4](P4-bindings-io.md) | Sprach-Bindings & IO + Security | ✅ abgeschlossen | 12 fix / 3 bewertet | 1 | ✅ | ✅ 45/45 |
-| [P5](P5-gui.md) | GUI: Fixes | ⬜ offen | 0/14 | 0 | — | — |
+| [P5](P5-gui.md) | GUI: Fixes | ✅ abgeschlossen | 6 fix / 8 bewertet→P6 | 0 | ✅ | ✅ 45/45 |
 | [P6](P6-cleanup.md) | Cleanup & finale Verifikation | ⬜ offen | — | — | — | — |
 
 Status-Legende: ⬜ offen · 🟡 in Arbeit · ✅ abgeschlossen · ⛔ blockiert
@@ -46,6 +46,8 @@ Status-Legende: ⬜ offen · 🟡 in Arbeit · ✅ abgeschlossen · ⛔ blockier
 | 2026-06-21 | P3 | **K-1 präzisiert:** Symptom ist UB-bedingt plattformabhängig (x86/gcc: falsche Facettenzahl statt Totalausfall) — durch Gegentest belegt (buggy 3356 ≠ fixed 3740). |
 | 2026-06-21 | P4 | **12 Fixes:** K-2/L-1 (PyPtr Copy/Move-Ctor, **kritisch**), L-2 (PyJSON 4 Referenzlecks), L-3 (Runner-Thread vor Aktiv-Prüfung), L-4 (DXF Null-Checks), L-5 (STL gcount), L-6 (opt Modulo/Underflow bei 0 Cuts), L-8 (resolution>0), L-9 (decodeFilename Underflow), L-11 (MatrixModule neg. Index), L-12 (PyNameResolver INCREF-Reihenfolge), L-13 (Catch.h überschreibt Exception), L-15 (XMLHandler currentTool). **1 Test** (pythonTests/RefcountTest). Suite: 44 → **45 grün**. |
 | 2026-06-21 | P4 | **L-10 (XXE) verifiziert: kein Risiko.** cbang nutzt Expat ohne `XML_SetExternalEntityRefHandler`; `XML_SetParamEntityParsing` ist per Default `NEVER` → externe Entitäten werden nicht aufgelöst. Kein Fix nötig. |
+| 2026-06-21 | — | P3+P4 committet (2 Commits). |
+| 2026-06-21 | P5 | **6 Fixes:** U-1 (QStringListModel-Leak pro Resize, **HOCH**), U-2 (BBCtrlAPI uninit. Member), U-3 (Dangling `fromRawData` bei async PUT), U-4 (Observer-Lebenszeit dokumentiert+erzwungen), U-7 (line-1 uint32-Underflow), U-12 (GL-Uniform tolerieren statt Draw-Abbruch). GUI baut, camotics startet, 45 Tests grün. |
 
 ---
 
@@ -119,6 +121,26 @@ Bekannte Nicht-Implementierung, kein versteckter Defekt.
 - **L-14 (ClipperModule Integer-Überlauf): NIEDRIG, belassen.** Betrifft nur absurd große
   Koordinaten in **nutzergeschriebenen** TPL-Skripten (kein untrusted Input); ein Clamp
   hätte geringen Nutzen und könnte legitime Extremgeometrie verändern.
+
+## P5 — Abschlussnotizen (zurückgestellte/bewertete Befunde)
+
+GUI-Code ist nicht automatisiert testbar (kein Display in CI). Die HOCH-Speicherfehler
+wurden behoben und über Build + Smoke-Test (camotics startet, Libs aufgelöst) verifiziert.
+Folgende Befunde wurden differenziert behandelt:
+
+- **U-4 (Observer-Lebenszeit): erzwungen + dokumentiert.** Die Zerstörungsreihenfolge ist
+  durch `view(new View(valueSet))` bereits zwingend korrekt (valueSet überlebt view); ein
+  Umstellen ist unmöglich (View braucht valueSet im Konstruktor). Mit Warn-Kommentar fixiert.
+  Ein vollständiges Observer-Deregistrierungs-System ist ein größerer Umbau (ohne GUI-Tests
+  zu riskant).
+- **U-5 / U-6 (OpenGL-Ressourcen-Lebenszyklus): zurückgestellt.** Korrektur erfordert
+  sorgfältige Kontext-Lebenszyklus-Behandlung, nur mit laufender GUI verifizierbar.
+- **U-8 (Reconnect-Limit): UX-Entscheidung.** Der UB-Teil (uninit. `lastMessage`) ist via
+  U-2 behoben. Ein hartes Reconnect-Limit ist nicht eindeutig gewünscht (CNC-Controller
+  sollen nach temporärem Ausfall automatisch wieder verbinden).
+- **U-9 (QtWin entflechten): Wartbarkeit, → eigene Aufgabe** (kein Defekt).
+- **U-10 (`QString::sprintf`) / U-13 (`QGLFormat`, `event->delta()`): → P6** (Qt6-Vorbereitung).
+- **U-11 (QMenu/QMovie Parent) / U-14 (redraw-Drosselung): NIEDRIG, → P6.**
 
 ## Offene Blocker / Entscheidungen
 

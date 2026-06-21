@@ -42,7 +42,7 @@ using namespace std;
 
 BBCtrlAPI::BBCtrlAPI(QtWin *parent) :
   parent(parent), netManager(new QNetworkAccessManager(this)), active(false),
-  _connected(false) {
+  _connected(false), useSystemProxy(false), lastMessage(0) {
   // Connect web socket signals
   connect(&webSocket, SIGNAL(error(QAbstractSocket::SocketError)), this,
           SLOT(onError(QAbstractSocket::SocketError)));
@@ -101,7 +101,9 @@ void BBCtrlAPI::uploadGCode(const char *data, unsigned length) {
   part.setHeader(QNetworkRequest::ContentDispositionHeader,
                  QString("form-data; name=\"gcode\"; filename=\"%1\"")
                  .arg(QString::fromUtf8(filename.c_str())));
-  part.setBody(QByteArray::fromRawData(data, length));
+  // Copy the data: the PUT below is asynchronous, so fromRawData (which does
+  // not copy) would dangle once the caller's buffer changes or is freed.
+  part.setBody(QByteArray(data, length));
 
   multiPart->append(part);
 
@@ -184,7 +186,9 @@ void BBCtrlAPI::onTextMessageReceived(const QString &message) {
                       vars.getNumber("offset_z", 0));
 
       // TODO need filename
-      parent->getView().path->setByLine("", line - 1, position + offset);
+      // Guard against uint32 underflow when the controller reports line 0.
+      uint32_t lineIndex = line ? line - 1 : 0;
+      parent->getView().path->setByLine("", lineIndex, position + offset);
       parent->redraw();
     }
   } CATCH_ERROR;
