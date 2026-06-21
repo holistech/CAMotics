@@ -1,0 +1,16 @@
+{
+  "units": "metric",
+  "resolution-mode": "manual",
+  "resolution": 1.0,
+  "tools": {
+    "1": {
+      "units": "metric", "shape": "cylindrical",
+      "length": 10, "diameter": 3, "description": ""
+    }
+  },
+  "workpiece": {
+    "automatic": false, "margin": 5,
+    "bounds": {"min": [0, 0, -5], "max": [20, 20, 0]}
+  },
+  "files": ["box.gcode"]
+}

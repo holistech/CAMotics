@@ -1,0 +1,177 @@
+[
+  {
+    "type": "start",
+    "id": 1
+  },
+  {
+    "type": "set",
+    "id": 2,
+    "name": "line",
+    "value": 2
+  },
+  {
+    "type": "line",
+    "id": 3,
+    "target": {"z": 4.761},
+    "entry-vel": 0,
+    "exit-vel": 218.6354,
+    "max-vel": 10000,
+    "max-accel": 200000,
+    "max-jerk": 50000000,
+    "rapid": true,
+    "first": true,
+    "times": [213.6796, 0, 213.6796, 4.1803, 172.966, 0, 172.966]
+  },
+  {
+    "type": "line",
+    "id": 4,
+    "target": {"x": 0.0226, "y": 0.0226, "z": 4.8805},
+    "entry-vel": 218.6354,
+    "exit-vel": 218.6354,
+    "max-vel": 10352.7618,
+    "max-accel": 207055.2361,
+    "max-jerk": 51763809.0205,
+    "rapid": true,
+    "times": [6.5588, 0, 6.5588, 7.6584, 6.5588, 0, 6.5588]
+  },
+  {
+    "type": "set",
+    "id": 5,
+    "name": "line",
+    "value": 3
+  },
+  {
+    "type": "line",
+    "id": 6,
+    "target": {"x": 0.0845, "y": 0.0845, "z": 4.968},
+    "entry-vel": 218.6354,
+    "exit-vel": 218.6354,
+    "max-vel": 14142.1356,
+    "max-accel": 282842.7125,
+    "max-jerk": 70710678.1187,
+    "rapid": true,
+    "times": [6.5777, 0, 6.5777, 7.5609, 6.5777, 0, 6.5777]
+  },
+  {
+    "type": "line",
+    "id": 7,
+    "target": {"x": 0.169, "y": 0.169, "z": 5},
+    "entry-vel": 218.6354,
+    "exit-vel": 218.6354,
+    "max-vel": 14641.0162,
+    "max-accel": 292820.323,
+    "max-jerk": 73205080.7569,
+    "rapid": true,
+    "times": [6.5794, 0, 6.5794, 7.551, 6.5794, 0, 6.5794]
+  },
+  {
+    "type": "line",
+    "id": 8,
+    "target": {"x": 5, "y": 5},
+    "entry-vel": 218.6354,
+    "exit-vel": 50,
+    "max-vel": 14142.1356,
+    "max-accel": 282842.7125,
+    "max-jerk": 70710678.1187,
+    "rapid": true,
+    "times": [186.9729, 0, 186.9729, 0.4816, 208.6729, 0, 208.6729]
+  },
+  {
+    "type": "set",
+    "id": 9,
+    "name": "_feed",
+    "value": 50
+  },
+  {
+    "type": "set",
+    "id": 10,
+    "name": "line",
+    "value": 4
+  },
+  {
+    "type": "line",
+    "id": 11,
+    "target": {"z": -1},
+    "entry-vel": 50,
+    "exit-vel": 50,
+    "max-vel": 50,
+    "max-accel": 200000,
+    "max-jerk": 50000000,
+    "times": [0, 0, 0, 7200, 0, 0, 0]
+  },
+  {
+    "type": "set",
+    "id": 12,
+    "name": "_feed",
+    "value": 250
+  },
+  {
+    "type": "set",
+    "id": 13,
+    "name": "line",
+    "value": 5
+  },
+  {
+    "type": "line",
+    "id": 14,
+    "target": {"x": 25},
+    "entry-vel": 50,
+    "exit-vel": 155.3774,
+    "max-vel": 250,
+    "max-accel": 200000,
+    "max-jerk": 50000000,
+    "times": [120, 0, 120, 4522.1608, 82.5399, 0, 82.5399]
+  },
+  {
+    "type": "set",
+    "id": 15,
+    "name": "line",
+    "value": 6
+  },
+  {
+    "type": "line",
+    "id": 16,
+    "target": {"z": 5},
+    "entry-vel": 155.3774,
+    "exit-vel": 0,
+    "max-vel": 10000,
+    "max-accel": 200000,
+    "max-jerk": 50000000,
+    "rapid": true,
+    "times": [206.3257, 0, 206.3257, 1.0459, 231.8566, 0, 231.8566]
+  },
+  {
+    "type": "set",
+    "id": 17,
+    "name": "line",
+    "value": 7
+  },
+  {
+    "type": "set",
+    "id": 18,
+    "name": "_plane",
+    "value": 170
+  },
+  {
+    "type": "set",
+    "id": 19,
+    "name": "speed",
+    "value": 0
+  },
+  {
+    "type": "output",
+    "id": 20,
+    "port": "mist",
+    "value": 0
+  },
+  {
+    "type": "output",
+    "id": 21,
+    "port": "flood",
+    "value": 0
+  },
+  {
+    "type": "end",
+    "id": 22
+  }
+]

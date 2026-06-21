@@ -1,0 +1,3 @@
+{
+  "command": "%(suite-dir)s/run-sim %(data-dir)s/project.camotics"
+}
